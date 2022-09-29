@@ -1,6 +1,6 @@
 target_sources(advent
 PRIVATE
-    puzzleA.cpp
+    iosupport.cpp
 PUBLIC
-    puzzleA.hpp
+    iosupport.hpp
 )
