@@ -1,61 +1,59 @@
 #include "day02/puzzle.hpp"
 
-#include "iosupport/iosupport.hpp"
-
 #include <charconv>
-#include <optional>
 #include <deque>
 #include <istream>
-#include <string>
+#include <optional>
 #include <stdexcept>
+#include <string>
+
+#include "iosupport/iosupport.hpp"
 
 namespace advent::day02 {
 
-void puzzleA(std::istream& input, std::ostream& output)
-{
+template <typename Strategy>
+void interpretInput(std::istream &input, Strategy &strategy) {
     std::string command;
     int amount;
 
-    int horizontal = 0, depth = 0;
     while (input >> command >> amount) {
         if (command == "forward") {
-            horizontal += amount;
-        }
-        else if (command == "down") {
-            depth += amount;
-        }
-        else if (command == "up") {
-            depth -= amount;
-        }
-        else {
+            strategy.forward(amount);
+        } else if (command == "down") {
+            strategy.down(amount);
+        } else if (command == "up") {
+            strategy.up(amount);
+        } else {
             throw std::runtime_error("Unknown command: " + command);
         }
     }
-    output << horizontal * depth;
 }
 
-void puzzleB(std::istream& input, std::ostream& output)
-{
-    std::string command;
-    int amount;
+void puzzleA(std::istream &input, std::ostream &output) {
+    struct {
+        int horizontal = 0, depth = 0;
+        void forward(int amount) { horizontal += amount; }
+        void down(int amount) { depth += amount; }
+        void up(int amount) { depth -= amount; }
+        int result() const { return horizontal * depth; }
+    } strategy;
+    interpretInput(input, strategy);
+    output << strategy.result();
+}
 
-    int horizontal = 0, depth = 0, aim = 0;
-    while (input >> command >> amount) {
-        if (command == "forward") {
+void puzzleB(std::istream &input, std::ostream &output) {
+    struct {
+        int horizontal = 0, depth = 0, aim = 0;
+        void forward(int amount) {
             horizontal += amount;
             depth += aim * amount;
         }
-        else if (command == "down") {
-            aim += amount;
-        }
-        else if (command == "up") {
-            aim -= amount;
-        }
-        else {
-            throw std::runtime_error("Unknown command: " + command);
-        }
-    }
-    output << horizontal * depth;
+        void down(int amount) { aim += amount; }
+        void up(int amount) { aim -= amount; }
+        int result() const { return horizontal * depth; }
+    } strategy;
+    interpretInput(input, strategy);
+    output << strategy.result();
 }
 
-}
+} // namespace advent::day02
