@@ -36,6 +36,26 @@ void puzzleA(std::istream& input, std::ostream& output)
 
 void puzzleB(std::istream& input, std::ostream& output)
 {
+    std::string command;
+    int amount;
+
+    int horizontal = 0, depth = 0, aim = 0;
+    while (input >> command >> amount) {
+        if (command == "forward") {
+            horizontal += amount;
+            depth += aim * amount;
+        }
+        else if (command == "down") {
+            aim += amount;
+        }
+        else if (command == "up") {
+            aim -= amount;
+        }
+        else {
+            throw std::runtime_error("Unknown command: " + command);
+        }
+    }
+    output << horizontal * depth;
 }
 
 }
