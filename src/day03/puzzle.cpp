@@ -11,6 +11,7 @@
 #include <string>
 
 #include "iosupport/iosupport.hpp"
+#include "utilities/binary.hpp"
 
 namespace advent::day03 {
 
@@ -26,23 +27,11 @@ int count01(int count, char ch) {
     throw std::runtime_error("Invalid input character.");
 }
 
-int safeDouble(int v) {
-    if (v > std::numeric_limits<int>::max() / 2) {
-        throw std::domain_error("binary rep too large");
-    }
-    return 2 * v;
-}
-
 int accumPositive(int accu, int value) {
-    return safeDouble(accu) + int(value > 0);
+    return utilities::binary::safeDouble(accu) + int(value > 0);
 }
 int accumNegative(int accu, int value) {
-    return safeDouble(accu) + int(value < 0);
-}
-
-int accumBinary(int accu, char ch) { return safeDouble(accu) + int(ch == '1'); }
-int readBinary(std::string_view sv) {
-    return std::accumulate(sv.begin(), sv.end(), 0, &accumBinary);
+    return utilities::binary::safeDouble(accu) + int(value < 0);
 }
 
 struct part {
@@ -94,7 +83,7 @@ void puzzleB(std::istream &input, std::ostream &output) {
     const auto co2ScrubberPos =
         findEntry(lines.begin(), lines.end(), std::less_equal<>{});
 
-    output << readBinary(*oxygenRatingPos) * readBinary(*co2ScrubberPos)
+    output << utilities::binary::readBinary(*oxygenRatingPos) * utilities::binary::readBinary(*co2ScrubberPos)
            << '\n';
 }
 
