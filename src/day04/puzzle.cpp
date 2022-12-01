@@ -56,7 +56,21 @@ void puzzleA(std::istream &input, std::ostream &output) {
         }
         fields.push_back(std::move(f));
     }
-
+/* WIP
+    std::list<std::vector<std::pair<int, int>>> mapping;
+    for (auto const& field : fields) {
+        mapping.emplace_back(100, std::pair(-1, -1));
+        int idx = 0;
+        for (int row = 0; row < 5; ++row) {
+            for (int col = 0; col < 5; ++col) {
+                int pos = field.at(idx);
+                mapping.back().at(pos) = std::pair(row, col);
+                ++idx;
+            }
+        }
+    }
+    std::list<std::vector<
+*/
     output << fields.size() << '\n';
 }
 
