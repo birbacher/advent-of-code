@@ -2,52 +2,51 @@
 
 #include "iosupport/iosupport.hpp"
 
+#include <algorithm>
 #include <charconv>
-#include <optional>
-#include <deque>
 
 namespace advent::day01 {
 
+namespace {
+
+class StateA {
+    int currentMax = 0;
+    int currentGroupSum = 0;
+public:
+    void nextGroup() {
+        currentMax = std::max(currentMax, currentGroupSum);
+        currentGroupSum = 0;
+    }
+    void valueInGroup(int value) {
+        currentGroupSum += value;
+    }
+    int result() const {
+        return currentMax;
+    }
+};
+
+}
+
 void puzzleA(std::istream& input, std::ostream& output)
 {
-    std::optional<int> last;
-    int increments = 0;
+    StateA state;
     iosupport::loadFileInLines(input, [&](std::string_view sv) {
-        int number;
-        auto [ptr, ec] = std::from_chars(sv.begin(), sv.end(), number);
-        if (ec != std::errc()) throw ec;
-
-        if (last) {
-            if (*last < number) ++increments;
+        if (sv.empty()) {
+            state.nextGroup();
         }
-        last = number;
+        else {
+            int number;
+            auto [ptr, ec] = std::from_chars(sv.begin(), sv.end(), number);
+            if (ec != std::errc()) throw ec;
+
+            state.valueInGroup(number);
+        }
     });
-    output << increments;
+    output << state.result() << '\n';
 }
 
 void puzzleB(std::istream& input, std::ostream& output)
 {
-    std::deque<int> window;
-    int currentSum = 0;
-    int increments = 0;
-    iosupport::loadFileInLines(input, [&](std::string_view sv) {
-        int number;
-        auto [ptr, ec] = std::from_chars(sv.begin(), sv.end(), number);
-        if (ec != std::errc()) throw ec;
-
-        const int oldSum = currentSum;
-
-        window.push_back(number);
-        currentSum += number;
-
-        if (window.size() > 3) {
-            currentSum -= window.front();
-            window.pop_front();
-
-            if (oldSum < currentSum) ++increments;
-        }
-    });
-    output << increments;
 }
 
 }
