@@ -17,8 +17,13 @@ enum RPS {
     Paper,
     Scissors,
 };
+enum Outcome {
+    Draw,
+    Lose,
+    Win,
+};
 
-RPS recognize(char encoded) {
+RPS recognizeRPS(char encoded) {
     switch (encoded) {
         case 'A': case 'X': return Rock;
         case 'B': case 'Y': return Paper;
@@ -28,21 +33,21 @@ RPS recognize(char encoded) {
     throw std::runtime_error("Invalid encoded RPS character: '"s + encoded + "'");
 }
 
-struct Round {
+struct RoundA {
     RPS opponent;
     RPS ownMove;
 };
 
-std::istream& operator>>(std::istream& stream, Round& round) {
+std::istream& operator>>(std::istream& stream, RoundA& round) {
     char other, own;
     if (stream >> other >> own) {
-        round.opponent = recognize(other);
-        round.ownMove = recognize(own);
+        round.opponent = recognizeRPS(other);
+        round.ownMove = recognizeRPS(own);
     }
     return stream;
 }
 
-int scoreOwnShape(Round round) {
+int scoreOwnShape(RoundA round) {
     switch (round.ownMove) {
         case Rock: return 1;
         case Paper: return 2;
@@ -57,7 +62,7 @@ int normalizedDifference(RPS lhs, RPS rhs) {
     return (valLhs - valRhs + 3) % 3;
 }
 
-int scoreWin(Round round) {
+int scoreWin(RoundA round) {
     switch (normalizedDifference(round.opponent, round.ownMove)) {
         case 0: return 3; // Draw
         case 1: return 0; // We lost
@@ -66,7 +71,7 @@ int scoreWin(Round round) {
     throw std::logic_error("Invalid normalized difference");
 }
 
-int scoreRound(Round round) {
+int scoreRound(RoundA round) {
     return scoreOwnShape(round) + scoreWin(round);
 }
 
@@ -75,10 +80,10 @@ int scoreRound(Round round) {
 void puzzleA(std::istream& input, std::ostream& output)
 {
     output << std::accumulate(
-        std::istream_iterator<Round>(input),
-        std::istream_iterator<Round>(),
+        std::istream_iterator<RoundA>(input),
+        std::istream_iterator<RoundA>(),
         0,
-        [](int sum, Round round) {
+        [](int sum, RoundA round) {
             return sum + scoreRound(round);
         }
     ) << '\n';
