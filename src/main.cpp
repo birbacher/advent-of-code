@@ -1,4 +1,4 @@
-#include "day01/puzzle.hpp"
+#include "day02/puzzle.hpp"
 
 #include <stdexcept>
 #include <iostream>
@@ -15,6 +15,6 @@ int main(int argc, const char* argv[])
         input = &file;
     }
 
-    advent::day01::puzzleB(*input, std::cout);
+    advent::day02::puzzleA(*input, std::cout);
     std::cout << '\n';
 }
