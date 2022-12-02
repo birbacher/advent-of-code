@@ -33,6 +33,16 @@ RPS recognizeRPS(char encoded) {
     throw std::runtime_error("Invalid encoded RPS character: '"s + encoded + "'");
 }
 
+Outcome recognizeOutcome(char encoded) {
+    switch (encoded) {
+        case 'X': return Lose;
+        case 'Y': return Draw;
+        case 'Z': return Win;
+    }
+    using namespace std::literals;
+    throw std::runtime_error("Invalid encoded Outcome character: '"s + encoded + "'");
+}
+
 struct RoundA {
     RPS opponent;
     RPS ownMove;
@@ -43,6 +53,20 @@ std::istream& operator>>(std::istream& stream, RoundA& round) {
     if (stream >> other >> own) {
         round.opponent = recognizeRPS(other);
         round.ownMove = recognizeRPS(own);
+    }
+    return stream;
+}
+
+struct RoundB {
+    RPS opponent;
+    Outcome outcome;
+};
+
+std::istream& operator>>(std::istream& stream, RoundB& round) {
+    char other, outcome;
+    if (stream >> other >> outcome) {
+        round.opponent = recognizeRPS(other);
+        round.outcome = recognizeOutcome(outcome);
     }
     return stream;
 }
@@ -75,6 +99,18 @@ int scoreRound(RoundA round) {
     return scoreOwnShape(round) + scoreWin(round);
 }
 
+RoundA computeOwnMove(RoundB round) {
+    RoundA result;
+    result.opponent = round.opponent;
+    result.ownMove = static_cast<RPS>((
+        static_cast<int>(round.opponent)
+        - static_cast<int>(round.outcome)
+        + 3
+    ) % 3
+    );
+    return result;
+}
+
 }
 
 void puzzleA(std::istream& input, std::ostream& output)
@@ -91,6 +127,14 @@ void puzzleA(std::istream& input, std::ostream& output)
 
 void puzzleB(std::istream& input, std::ostream& output)
 {
+    output << std::accumulate(
+        std::istream_iterator<RoundB>(input),
+        std::istream_iterator<RoundB>(),
+        0,
+        [](int sum, RoundB round) {
+            return sum + scoreRound(computeOwnMove(round));
+        }
+    ) << '\n';
 }
 
 }
