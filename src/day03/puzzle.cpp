@@ -43,6 +43,39 @@ int prioOfDuplicate(std::string_view compartment1, std::string_view compartment2
     throw std::runtime_error("No duplicates found");
 }
 
+int prioOfTriple(
+    std::string_view rucksack1,
+    std::string_view rucksack2,
+    std::string_view rucksack3)
+{
+    std::array<int, orderedByPrio.size()> occurrences{};
+    for (char c : rucksack1) {
+        occurrences[getPriority(c) - 1] = 1;
+    }
+    for (char c : rucksack2) {
+        int& occ = occurrences[getPriority(c) - 1];
+        if (occ == 1) {
+            occ = 2;
+        }
+    }
+    for (char c : rucksack3) {
+        int p = getPriority(c);
+        if (occurrences[p - 1] == 2) {
+            return p;
+        }
+    }
+    throw std::runtime_error("No triples found");
+}
+
+struct Group {
+    std::string rucksacks[3];
+};
+
+std::istream& operator>>(std::istream& stream, Group& g) {
+    std::copy_n(std::istream_iterator<std::string>(stream), std::size(g.rucksacks), g.rucksacks);
+    return stream;
+}
+
 }
 
 void puzzleA(std::istream& input, std::ostream& output)
@@ -57,6 +90,11 @@ void puzzleA(std::istream& input, std::ostream& output)
 
 void puzzleB(std::istream& input, std::ostream& output)
 {
+    int sum = 0;
+    std::for_each(std::istream_iterator<Group>(input), std::istream_iterator<Group>(), [&](Group const& g) {
+        sum += prioOfTriple(g.rucksacks[0], g.rucksacks[1], g.rucksacks[2]);
+    });
+    output << sum << '\n';
 }
 
 }
