@@ -1,4 +1,4 @@
-#include "day01/puzzle.hpp"
+#include "adventofcode.hpp"
 
 #include "iosupport/iosupport.hpp"
 
@@ -7,7 +7,7 @@
 #include <queue>
 #include <iostream>
 
-namespace advent::day01 {
+namespace advent::common {
 
 namespace {
 
@@ -76,7 +76,8 @@ public:
 
 }
 
-void puzzleA(std::istream& input, std::ostream& output)
+template <>
+void puzzleA<2022,1>(std::istream& input, std::ostream& output)
 {
     StateA state;
     iosupport::loadFileInLines(input, [&](std::string_view sv) {
@@ -95,7 +96,8 @@ void puzzleA(std::istream& input, std::ostream& output)
     output << state.result() << '\n';
 }
 
-void puzzleB(std::istream& input, std::ostream& output)
+template <>
+void puzzleB<2022,1>(std::istream& input, std::ostream& output)
 {
     StateB state;
     iosupport::loadFileInLines(input, [&](std::string_view sv) {

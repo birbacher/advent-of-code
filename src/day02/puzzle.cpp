@@ -1,4 +1,4 @@
-#include "day02/puzzle.hpp"
+#include "adventofcode.hpp"
 
 #include <algorithm>
 #include <numeric>
@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace advent::day02 {
+namespace advent::common {
 
 namespace {
 
@@ -113,7 +113,8 @@ RoundA computeOwnMove(RoundB round) {
 
 }
 
-void puzzleA(std::istream& input, std::ostream& output)
+template <>
+void puzzleA<2022,2>(std::istream& input, std::ostream& output)
 {
     output << std::accumulate(
         std::istream_iterator<RoundA>(input),
@@ -125,7 +126,8 @@ void puzzleA(std::istream& input, std::ostream& output)
     ) << '\n';
 }
 
-void puzzleB(std::istream& input, std::ostream& output)
+template <>
+void puzzleB<2022,2>(std::istream& input, std::ostream& output)
 {
     output << std::accumulate(
         std::istream_iterator<RoundB>(input),

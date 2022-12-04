@@ -1,4 +1,4 @@
-#include "day03/puzzle.hpp"
+#include "adventofcode.hpp"
 
 #include "iosupport/iosupport.hpp"
 
@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace advent::day03 {
+namespace advent::common {
 
 namespace {
 
@@ -78,7 +78,8 @@ std::istream& operator>>(std::istream& stream, Group& g) {
 
 }
 
-void puzzleA(std::istream& input, std::ostream& output)
+template <>
+void puzzleA<2022,3>(std::istream& input, std::ostream& output)
 {
     int sum = 0;
     iosupport::loadFileInLines(input, [&](std::string_view sv) {
@@ -88,7 +89,8 @@ void puzzleA(std::istream& input, std::ostream& output)
     output << sum << '\n';
 }
 
-void puzzleB(std::istream& input, std::ostream& output)
+template <>
+void puzzleB<2022,3>(std::istream& input, std::ostream& output)
 {
     int sum = 0;
     std::for_each(std::istream_iterator<Group>(input), std::istream_iterator<Group>(), [&](Group const& g) {
