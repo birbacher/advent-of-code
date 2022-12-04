@@ -49,9 +49,19 @@ bool isSecondContainedInFirst(SectionRange const &lhs,
                               SectionRange const &rhs) {
     return lhs.first <= rhs.first && lhs.last >= rhs.last;
 }
+
 bool isOneContainedInOther(ElfPair const &p) {
     return isSecondContainedInFirst(p.fstElf, p.sndElf) ||
            isSecondContainedInFirst(p.sndElf, p.fstElf);
+}
+
+bool overlaps(SectionRange const &lhs,
+                              SectionRange const &rhs) {
+    return lhs.first <= rhs.last && lhs.last >= rhs.first;
+}
+
+bool isOverlapping(ElfPair const &p) {
+    return overlaps(p.fstElf, p.sndElf);
 }
 
 } // namespace
@@ -63,6 +73,11 @@ template <> void puzzleA<2022, 4>(std::istream &input, std::ostream &output) {
            << '\n';
 }
 
-template <> void puzzleB<2022, 4>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 4>(std::istream &input, std::ostream &output) {
+    output << std::count_if(std::istream_iterator<ElfPair>(input),
+                            std::istream_iterator<ElfPair>(),
+                            &isOverlapping)
+           << '\n';
+}
 
 } // namespace advent::common
