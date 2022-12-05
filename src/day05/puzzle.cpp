@@ -40,7 +40,7 @@ class Floor {
         return stacks.at(oneBasedIndex - 1);
     }
 
-    void perform(Action const &action) {
+    void perform9000(Action const &action) {
         Stack &src = at(action.sourceStack);
         Stack &dst = at(action.destStack);
         if (src.size() < action.amount) {
@@ -50,6 +50,26 @@ class Floor {
         for (std::size_t i = 0; i < action.amount; ++i) {
             dst.push(src.top());
             src.pop();
+        }
+    }
+
+    void perform9001(Action const &action) {
+        Stack &src = at(action.sourceStack);
+        Stack &dst = at(action.destStack);
+        if (src.size() < action.amount) {
+            throw std::runtime_error(
+                "Too few items on source stack to perform action");
+        }
+        // We only have the stack interface, so we'll run this by a tmp
+        // stack to save us from the effort of changing our datatype.
+        std::stack<Create> tmp;
+        for (std::size_t i = 0; i < action.amount; ++i) {
+            tmp.push(src.top());
+            src.pop();
+        }
+        for (std::size_t i = 0; i < action.amount; ++i) {
+            dst.push(tmp.top());
+            tmp.pop();
         }
     }
 
@@ -138,12 +158,18 @@ std::istream &operator>>(std::istream &stream, Action &action) {
 
 template <> void puzzleA<2022, 5>(std::istream &input, std::ostream &output) {
     Floor floor = readFloor(input);
-    std::for_each(
-        std::istream_iterator<Action>(input), std::istream_iterator<Action>(),
-        std::bind(&Floor::perform, &(floor), std::placeholders::_1));
+    std::for_each(std::istream_iterator<Action>(input),
+                  std::istream_iterator<Action>(),
+                  std::bind(&Floor::perform9000, &floor, std::placeholders::_1));
     floor.printTops(output);
 }
 
-template <> void puzzleB<2022, 5>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 5>(std::istream &input, std::ostream &output) {
+    Floor floor = readFloor(input);
+    std::for_each(std::istream_iterator<Action>(input),
+                  std::istream_iterator<Action>(),
+                  std::bind(&Floor::perform9001, &floor, std::placeholders::_1));
+    floor.printTops(output);
+}
 
 } // namespace advent::common
