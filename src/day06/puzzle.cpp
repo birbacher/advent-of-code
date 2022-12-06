@@ -30,11 +30,8 @@ std::size_t getCharIndex(char c) {
     return std::distance(abc.begin(), pos);
 }
 
-constexpr std::size_t targetWindowSize = 4;
-
-} // namespace
-
-template <> void puzzleA<2022, 6>(std::istream &input, std::ostream &output) {
+void puzzle(std::istream &input, std::ostream &output,
+            std::size_t targetWindowSize) {
     Abc state{};
     int numDifferentChars = 0;
     int resultingIndex = 0;
@@ -72,6 +69,13 @@ template <> void puzzleA<2022, 6>(std::istream &input, std::ostream &output) {
                   });
 }
 
-template <> void puzzleB<2022, 6>(std::istream &input, std::ostream &output) {}
+} // namespace
+
+template <> void puzzleA<2022, 6>(std::istream &input, std::ostream &output) {
+    puzzle(input, output, 4);
+}
+template <> void puzzleB<2022, 6>(std::istream &input, std::ostream &output) {
+    puzzle(input, output, 14);
+}
 
 } // namespace advent::common
