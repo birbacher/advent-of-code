@@ -67,10 +67,7 @@ computeSizeAndReport(DirEntry &node,
     return node.myTotalSize;
 }
 
-} // namespace
-
-template <> void puzzleA<2022, 7>(std::istream &input, std::ostream &output) {
-    DirEntry root;
+void readTree(DirEntry &root, std::istream &input) {
     Builder builder{&root};
     std::string tmp, tmp2;
     while (input >> tmp) {
@@ -95,6 +92,14 @@ template <> void puzzleA<2022, 7>(std::istream &input, std::ostream &output) {
             }
         }
     }
+}
+
+} // namespace
+
+template <> void puzzleA<2022, 7>(std::istream &input, std::ostream &output) {
+    DirEntry root;
+    readTree(root, input);
+
     std::size_t sum10k = 0;
     computeSizeAndReport(root, [&](DirEntry const &reported) {
         sum10k += reported.myTotalSize;
