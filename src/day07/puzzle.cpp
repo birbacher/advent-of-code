@@ -14,6 +14,7 @@
 #include <numeric>
 #include <ostream>
 #include <set>
+#include <limits>
 
 namespace advent::common {
 
@@ -53,17 +54,15 @@ struct Builder {
 
 std::size_t
 computeSizeAndReport(DirEntry &node,
-                     std::function<void(DirEntry const &)> const &report10k) {
+                     std::function<void(DirEntry const &)> const &report) {
     node.myTotalSize = 0;
     for (auto [name, subdir] : node.subdirs) {
-        node.myTotalSize += computeSizeAndReport(subdir, report10k);
+        node.myTotalSize += computeSizeAndReport(subdir, report);
     }
     for (auto [name, size] : node.files) {
         node.myTotalSize += size;
     }
-    if (node.myTotalSize <= 100'000) {
-        report10k(node);
-    }
+    report(node);
     return node.myTotalSize;
 }
 
@@ -94,19 +93,49 @@ void readTree(DirEntry &root, std::istream &input) {
     }
 }
 
+constexpr std::size_t sizeOfDisk = 70'000'000;
+constexpr std::size_t spaceRequired = 30'000'000;
+
+std::size_t computeRequiredDelete(DirEntry const &root) {
+    const std::size_t currentlyFree = sizeOfDisk - root.myTotalSize;
+    if (spaceRequired <= currentlyFree) {
+        throw std::runtime_error("Already enough space is free");
+    }
+    const std::size_t missingFree = spaceRequired - currentlyFree;
+    return missingFree;
+}
+
 } // namespace
 
 template <> void puzzleA<2022, 7>(std::istream &input, std::ostream &output) {
     DirEntry root;
     readTree(root, input);
 
-    std::size_t sum10k = 0;
+    std::size_t sum100k = 0;
     computeSizeAndReport(root, [&](DirEntry const &reported) {
-        sum10k += reported.myTotalSize;
+        if (reported.myTotalSize <= 100'000) {
+            sum100k += reported.myTotalSize;
+        }
     });
-    output << sum10k << '\n';
+    output << sum100k << '\n';
 }
 
-template <> void puzzleB<2022, 7>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 7>(std::istream &input, std::ostream &output) {
+    DirEntry root;
+    readTree(root, input);
+
+    computeSizeAndReport(root, [&](DirEntry const &reported) {});
+
+    const std::size_t requiredDelete = computeRequiredDelete(root);
+
+    std::size_t trackSmallest = std::numeric_limits<std::size_t>::max();
+    computeSizeAndReport(root, [&](DirEntry const &reported) {
+        if (reported.myTotalSize >= requiredDelete) {
+            trackSmallest = std::min(trackSmallest, reported.myTotalSize);
+        }
+    });
+
+    output << trackSmallest << '\n';
+}
 
 } // namespace advent::common
