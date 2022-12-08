@@ -95,6 +95,54 @@ Field readField(std::istream &input) {
     return field;
 }
 
+Access advance(Access access, std::ptrdiff_t n) {
+    return Access{access[n], access.stride, access.numElements - n};
+}
+
+Access accessRight(Dim dim, std::ptrdiff_t row, std::ptrdiff_t col) {
+    return advance(accessRow(dim, row), col);
+}
+Access accessLeft(Dim dim, std::ptrdiff_t row, std::ptrdiff_t col) {
+    return advance(accessRowReverse(dim, row), dim.columns - col - 1);
+}
+Access accessDown(Dim dim, std::ptrdiff_t row, std::ptrdiff_t col) {
+    return advance(accessCol(dim, col), row);
+}
+Access accessUp(Dim dim, std::ptrdiff_t row, std::ptrdiff_t col) {
+    return advance(accessColReverse(dim, col), dim.rows - row - 1);
+}
+
+int scenic(Field const &field, Access access) {
+    const char me = field.data.at(access[0]);
+    int count = 0;
+    for (std::ptrdiff_t i = 1; i < access.numElements; ++i) {
+        ++count;
+        if (field.data.at(access[i]) >= me)
+            break;
+    }
+    return count;
+}
+
+int scenic(Field const &field, std::ptrdiff_t row, std::ptrdiff_t col) {
+    int score = 1;
+    score *= scenic(field, accessRight(field.dim, row, col));
+    score *= scenic(field, accessLeft(field.dim, row, col));
+    score *= scenic(field, accessDown(field.dim, row, col));
+    score *= scenic(field, accessUp(field.dim, row, col));
+    return score;
+}
+
+int scenic(Field const &field) {
+    int maxi = 0;
+    // Skip outermost trees, because they have score zero.
+    for (std::ptrdiff_t row = 1; row < field.dim.rows - 1; ++row) {
+        for (std::ptrdiff_t col = 1; col < field.dim.columns - 1; ++col) {
+            maxi = std::max(maxi, scenic(field, row, col));
+        }
+    }
+    return maxi;
+}
+
 } // namespace
 
 template <> void puzzleA<2022, 8>(std::istream &input, std::ostream &output) {
@@ -104,6 +152,9 @@ template <> void puzzleA<2022, 8>(std::istream &input, std::ostream &output) {
     output << std::count(selected.begin(), selected.end(), true) << '\n';
 }
 
-template <> void puzzleB<2022, 8>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 8>(std::istream &input, std::ostream &output) {
+    Field field = readField(input);
+    output << scenic(field) << '\n';
+}
 
 } // namespace advent::common
