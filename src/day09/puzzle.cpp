@@ -82,21 +82,15 @@ Position dragTail(Position head, Position tail) {
     if (absH <= 1 && absV <= 1) {
         return tail;
     }
-    int dragH = head.h > tail.h ? head.h - 1 : head.h + 1;
-    int dragV = head.v > tail.v ? head.v - 1 : head.v + 1;
-    if (head.h == tail.h) {
-        return {head.h, dragV};
-    }
-    if (head.v == tail.v) {
-        return {dragH, head.v};
-    }
-    if (absH == 2 && absV == 2) {
-        return {dragH, dragV};
-    } else if (absH == 2) {
-        return {dragH, head.v};
-    } else {
-        return {head.h, dragV};
-    }
+    if (head.h > tail.h)
+        ++tail.h;
+    else if (head.h < tail.h)
+        --tail.h;
+    if (head.v > tail.v)
+        ++tail.v;
+    else if (head.v < tail.v)
+        --tail.v;
+    return tail;
 }
 
 Position updatePosition(Position p, Direction dir) {
