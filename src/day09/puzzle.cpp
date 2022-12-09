@@ -92,8 +92,7 @@ Position dragTail(Position head, Position tail) {
     }
     if (absH == 2) {
         return {dragH, head.v};
-    }
-    else {
+    } else {
         return {head.h, dragV};
     }
 }
@@ -127,16 +126,18 @@ bool consumeMoveOne(Position &pos, Move &m) {
 
 struct Tracker {
     std::unordered_set<Position, PosHash> visited;
-    Position currentHead, currentTail;
+    std::vector<Position> rope;
 
-    Tracker() {
-        visited.insert(currentTail); // starting position
+    Tracker(std::size_t n = 2) : rope(n) {
+        assert(n >= 2);
+        visited.insert(rope.back()); // starting position
     }
 
     void applyMove(Move m) {
-        while (consumeMoveOne(currentHead, m)) {
-            currentTail = dragTail(currentHead, currentTail);
-            visited.insert(currentTail);
+        assert(rope.size() == 2);
+        while (consumeMoveOne(rope.front(), m)) {
+            rope.back() = dragTail(rope.front(), rope.back());
+            visited.insert(rope.back());
         }
     }
 
