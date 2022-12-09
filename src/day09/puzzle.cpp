@@ -136,7 +136,7 @@ struct Tracker {
     void applyMove(Move m) {
         while (consumeMoveOne(rope.front(), m)) {
             for (std::size_t i = 1; i < rope.size(); ++i) {
-                rope[i] = dragTail(rope[i - 1], rope[i]);
+                rope[i] = dragTail(rope.at(i - 1), rope.at(i));
             }
             visited.insert(rope.back());
         }
@@ -155,6 +155,15 @@ template <> void puzzleA<2022, 9>(std::istream &input, std::ostream &output) {
     output << t.numVisited() << '\n';
 }
 
-template <> void puzzleB<2022, 9>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 9>(std::istream &input, std::ostream &output) {
+    Tracker t(10);
+    std::for_each(std::istream_iterator<Move>(input),
+                  std::istream_iterator<Move>(),
+                  [&](Move m) { t.applyMove(m); });
+    output << t.numVisited() << '\n';
+}
+
+// 2466
+// That's not the right answer; your answer is too low.
 
 } // namespace advent::common
