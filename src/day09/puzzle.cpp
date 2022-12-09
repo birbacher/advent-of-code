@@ -134,9 +134,10 @@ struct Tracker {
     }
 
     void applyMove(Move m) {
-        assert(rope.size() == 2);
         while (consumeMoveOne(rope.front(), m)) {
-            rope.back() = dragTail(rope.front(), rope.back());
+            for (std::size_t i = 1; i < rope.size(); ++i) {
+                rope[i] = dragTail(rope[i - 1], rope[i]);
+            }
             visited.insert(rope.back());
         }
     }
