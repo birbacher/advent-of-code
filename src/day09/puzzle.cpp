@@ -90,7 +90,9 @@ Position dragTail(Position head, Position tail) {
     if (head.v == tail.v) {
         return {dragH, head.v};
     }
-    if (absH == 2) {
+    if (absH == 2 && absV == 2) {
+        return {dragH, dragV};
+    } else if (absH == 2) {
         return {dragH, head.v};
     } else {
         return {head.h, dragV};
