@@ -77,7 +77,7 @@ char getOutputChar(CpuState const &cpu) {
     const int crtPixelVert = (cpu.cycle - 1) % crtPixelsHorz;
     assert(0 <= crtPixelVert);
     assert(crtPixelVert < crtPixelsHorz);
-    return crtPixelVert >= cpu.x - 1 && crtPixelVert <= cpu.x + 1 ? '#' : '.';
+    return crtPixelVert >= cpu.x - 1 && crtPixelVert <= cpu.x + 1 ? '#' : ' ';
 }
 bool isNewlineCycle(int cycle) { return cycle % crtPixelsHorz == 0; }
 
