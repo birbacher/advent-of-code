@@ -67,6 +67,31 @@ void applyEffect(SignalObserver &ob, Effect effect) {
     ob.cpu.x += effect.deltaX;
 }
 
+struct CRT {
+    CpuState cpu;
+    std::ostream &output;
+};
+
+constexpr int crtPixelsHorz = 40;
+char getOutputChar(CpuState const &cpu) {
+    const int crtPixelVert = (cpu.cycle - 1) % crtPixelsHorz;
+    assert(0 <= crtPixelVert);
+    assert(crtPixelVert < crtPixelsHorz);
+    return crtPixelVert >= cpu.x - 1 && crtPixelVert <= cpu.x + 1 ? '#' : '.';
+}
+bool isNewlineCycle(int cycle) { return cycle % crtPixelsHorz == 0; }
+
+void render(CRT &crt, Effect effect) {
+    while (effect.cycles--) {
+        crt.output << getOutputChar(crt.cpu);
+        if (isNewlineCycle(crt.cpu.cycle)) {
+            crt.output << '\n';
+        }
+        ++crt.cpu.cycle;
+    }
+    crt.cpu.x += effect.deltaX;
+}
+
 } // namespace
 
 template <> void puzzleA<2022, 10>(std::istream &input, std::ostream &output) {
@@ -77,6 +102,11 @@ template <> void puzzleA<2022, 10>(std::istream &input, std::ostream &output) {
     output << ob.sumSignals << '\n';
 }
 
-template <> void puzzleB<2022, 10>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 10>(std::istream &input, std::ostream &output) {
+    CRT crt{{}, output};
+    std::for_each(std::istream_iterator<Effect>(input),
+                  std::istream_iterator<Effect>(),
+                  std::bind(&render, std::ref(crt), std::placeholders::_1));
+}
 
 } // namespace advent::common
