@@ -20,11 +20,13 @@ namespace advent::common {
 
 namespace {
 
+using WorryLevel = int;
+
 struct Item {
-    int worryLevel{};
+    WorryLevel worryLevel{};
 };
 
-using WorryLevelChange = std::function<int(int)>;
+using WorryLevelChange = std::function<WorryLevel(WorryLevel)>;
 
 struct Monkey {
     /// @brief The queue of items this monkey will look at.
@@ -45,7 +47,7 @@ struct Monkey {
     }
 };
 
-std::function<int(int, int)> selectByOp(char op) {
+std::function<WorryLevel(WorryLevel, WorryLevel)> selectByOp(char op) {
     switch (op) {
     case '+':
         return std::plus<>{};
@@ -63,15 +65,15 @@ std::function<int(int, int)> selectByOp(char op) {
 WorryLevelChange selectWorryLevelChange(char op, std::string_view operand) {
     auto binOp = selectByOp(op);
     if (operand == "old") {
-        return [=](int old) { return binOp(old, old); };
+        return [=](WorryLevel old) { return binOp(old, old); };
     } else {
-        int constant;
+        WorryLevel constant;
         auto [ptr, ec] =
             std::from_chars(operand.begin(), operand.end(), constant);
         if (ec != std::errc())
             throw ec;
 
-        return [=](int old) { return binOp(old, constant); };
+        return [=](WorryLevel old) { return binOp(old, constant); };
     }
 }
 
