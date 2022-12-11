@@ -20,7 +20,7 @@ namespace advent::common {
 
 namespace {
 
-using WorryLevel = __int128;
+using WorryLevel = std::int64_t;
 
 struct Item {
     WorryLevel worryLevel{};
