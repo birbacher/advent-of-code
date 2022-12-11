@@ -20,7 +20,7 @@ namespace advent::common {
 
 namespace {
 
-using WorryLevel = int;
+using WorryLevel = __int128;
 
 struct Item {
     WorryLevel worryLevel{};
@@ -83,6 +83,17 @@ struct State {
 
     /// @brief An array parallel to 'monkeys' to track their activity.
     std::vector<int> activities;
+
+    WorryLevel relief{};
+
+    WorryLevel ring{1};
+
+    void initializeRest() {
+        activities.resize(monkeys.size());
+        for (Monkey const &m : monkeys) {
+            ring *= m.testDivisor;
+        }
+    }
 };
 
 struct Interpreter {
@@ -211,7 +222,8 @@ void executeItem(State &state, int monkeyIndex) {
     Item current = monkey.items.front();
     monkey.items.pop();
     current.worryLevel = monkey.worryLevelChangeFn(current.worryLevel);
-    current.worryLevel /= 3;
+    current.worryLevel /= state.relief;
+    current.worryLevel %= state.ring;
     int const targetIndex = monkey.computeTargetForItem(current);
     state.monkeys.at(targetIndex).items.push(current);
     ++state.activities.at(monkeyIndex);
@@ -234,9 +246,11 @@ void executeRound(State &state) {
 
 template <> void puzzleA<2022, 11>(std::istream &input, std::ostream &output) {
     State state;
+    state.relief = 3;
     Interpreter interpreter{&state.monkeys, input};
     interpreter.readAll();
-    state.activities.resize(state.monkeys.size());
+    state.initializeRest();
+
     for (int i = 0; i < 20; ++i) {
         executeRound(state);
     }
@@ -245,6 +259,19 @@ template <> void puzzleA<2022, 11>(std::istream &input, std::ostream &output) {
     output << state.activities.at(0) * state.activities.at(1) << '\n';
 }
 
-template <> void puzzleB<2022, 11>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 11>(std::istream &input, std::ostream &output) {
+    State state;
+    state.relief = 1;
+    Interpreter interpreter{&state.monkeys, input};
+    interpreter.readAll();
+    state.initializeRest();
+
+    for (int i = 0; i < 10'000; ++i) {
+        executeRound(state);
+    }
+    std::sort(state.activities.begin(), state.activities.end(),
+              std::greater<>{});
+    output << std::int64_t(state.activities.at(0)) * state.activities.at(1) << '\n';
+}
 
 } // namespace advent::common
