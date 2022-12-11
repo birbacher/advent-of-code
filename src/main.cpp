@@ -15,6 +15,6 @@ int main(int argc, const char* argv[])
         input = &file;
     }
 
-    advent::common::puzzleB<2022,10>(*input, std::cout);
+    advent::common::puzzleA<2022,11>(*input, std::cout);
     std::cout << '\n';
 }
