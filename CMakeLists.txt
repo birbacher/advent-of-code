@@ -8,4 +8,6 @@ add_compile_options(-fsanitize=undefined)
 add_compile_options(-fno-sanitize-recover)
 add_link_options(-fsanitize=undefined)
 
+find_package(Boost)
+
 add_subdirectory(src)
