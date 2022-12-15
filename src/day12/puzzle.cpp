@@ -5,10 +5,9 @@
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graph_concepts.hpp>
-#include <boost/iterator/counting_iterator.hpp>
-#include <boost/iterator/filter_iterator.hpp>
-#include <boost/iterator/indirect_iterator.hpp>
+#include <boost/iterator/zip_iterator.hpp>
 #include <boost/property_map/property_map.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <algorithm>
 #include <array>
@@ -89,9 +88,7 @@ template <typename T> struct FieldT {
         using reference = T &;
         using category = boost::lvalue_property_map_tag;
 
-        T &operator[](Index2D pos) {
-            return (*field)[pos];
-        }
+        T &operator[](Index2D pos) { return (*field)[pos]; }
         // T const &operator[](Index2D pos) const {
         //     return data.at(pos.row * dim.columns + pos.col);
         // }
@@ -115,7 +112,7 @@ char charSE(char c) {
     }
 }
 
-bool isAdjacentChar(char src, char dst) {
+bool isAdjacentChar(char dst, char src) {
     return charSE(dst) <= charSE(src) + 1;
 }
 
@@ -309,18 +306,40 @@ struct BfsDistanceVisitor : public boost::default_bfs_visitor {
         auto src = dmap[source(e, g)];
         auto &cur = dmap[target(e, g)];
         cur = std::min(src + 1, cur);
-        //std::clog << "Examine edge: " << source(e, g) << " - " << target(e, g)
-        //          << ": " << cur << std::endl;
+        // std::clog << "Examine edge: " << source(e, g) << " - " << target(e,
+        // g)
+        //           << ": " << cur << std::endl;
     }
     void discover_vertex(HeightGraph::vertex_descriptor v,
                          HeightGraph const &g) const {
-        //std::clog << "Discover vertex: " << v << ": " << dmap[v] << '\n';
+        // std::clog << "Discover vertex: " << v << ": " << dmap[v] << '\n';
     }
     void finish_vertex(HeightGraph::vertex_descriptor v,
                        HeightGraph const &g) const {
-        //std::clog << "Finish vertex: " << v << ": " << dmap[v] << '\n';
+        // std::clog << "Finish vertex: " << v << ": " << dmap[v] << '\n';
     }
 };
+
+FieldT<std::ptrdiff_t> loadDistanceMap(Field &field,
+                                       HeightGraph::vertex_descriptor vecS,
+                                       HeightGraph::vertex_descriptor vecE) {
+    FieldT<std::ptrdiff_t> distanceMap;
+    distanceMap.dim = field.dim;
+    distanceMap.data.resize(field.data.size(),
+                            std::numeric_limits<std::ptrdiff_t>::max());
+    distanceMap[vecE] = 0;
+
+    FieldT<boost::default_color_type> colorMap;
+    colorMap.dim = field.dim;
+    colorMap.data.resize(field.data.size());
+
+    HeightGraph g{&field};
+    BfsDistanceVisitor vis(distanceMap);
+    boost::breadth_first_search(g, vecE,
+                                boost::visitor(vis).color_map(colorMap.map()));
+
+    return distanceMap;
+}
 
 } // namespace
 
@@ -328,24 +347,31 @@ template <> void puzzleA<2022, 12>(std::istream &input, std::ostream &output) {
     Field field = readField(input);
     auto [vecS, vecE] = findSE(field);
 
-    HeightGraph g{&field};
+    FieldT<std::ptrdiff_t> distanceMap = loadDistanceMap(field, vecS, vecE);
 
-    FieldT<boost::default_color_type> colorMap;
-    colorMap.dim = field.dim;
-    colorMap.data.resize(field.data.size());
-
-    FieldT<std::ptrdiff_t> distanceMap;
-    distanceMap.dim = field.dim;
-    distanceMap.data.resize(field.data.size(),
-                            std::numeric_limits<std::ptrdiff_t>::max());
-    distanceMap[vecS] = 0;
-
-    BfsDistanceVisitor vis(distanceMap);
-    boost::breadth_first_search(g, vecS,
-                                boost::visitor(vis).color_map(colorMap.map()));
-    output << distanceMap[vecE] << '\n';
+    output << distanceMap[vecS] << '\n';
 }
 
-template <> void puzzleB<2022, 12>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 12>(std::istream &input, std::ostream &output) {
+
+    Field field = readField(input);
+    auto [vecS, vecE] = findSE(field);
+
+    FieldT<std::ptrdiff_t> distanceMap = loadDistanceMap(field, vecS, vecE);
+
+    output << std::accumulate(
+                  boost::make_zip_iterator(boost::make_tuple(
+                      field.data.begin(), distanceMap.data.begin())),
+                  boost::make_zip_iterator(boost::make_tuple(
+                      field.data.end(), distanceMap.data.end())),
+                  std::numeric_limits<std::ptrdiff_t>::max(),
+                  [](std::ptrdiff_t curMin, auto p) {
+                      if (boost::get<0>(p) == 'a' || boost::get<0>(p) == 'S') {
+                          return std::min(curMin, boost::get<1>(p));
+                      }
+                      return curMin;
+                  })
+           << '\n';
+}
 
 } // namespace advent::common
