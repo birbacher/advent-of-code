@@ -1,11 +1,13 @@
 #include "adventofcode.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <charconv>
 #include <istream>
 #include <iterator>
 #include <ostream>
 #include <string>
+#include <vector>
 
 namespace advent::common {
 
@@ -57,11 +59,11 @@ int consumeNum(std::string const &str, std::ptrdiff_t &idx) {
 
 bool isOrdered(Pair &p, CmpState &state) {
 beginning:
-    if (state.idxLft == p.lft.size()) {
-        return true;
-    }
     if (state.idxRgt == p.rgt.size()) {
         return false;
+    }
+    if (state.idxLft == p.lft.size()) {
+        return true;
     }
     const char cLft = p.lft.at(state.idxLft);
     const char cRgt = p.rgt.at(state.idxRgt);
@@ -141,6 +143,14 @@ advance:
     goto beginning;
 }
 
+struct Order {
+    bool operator()(std::string const &lhs, std::string const &rhs) const {
+        Pair p{lhs, rhs};
+        CmpState state;
+        return isOrdered(p, state);
+    }
+};
+
 } // namespace
 
 template <> void puzzleA<2022, 13>(std::istream &input, std::ostream &output) {
@@ -158,6 +168,19 @@ template <> void puzzleA<2022, 13>(std::istream &input, std::ostream &output) {
     output << result << '\n';
 }
 
-template <> void puzzleB<2022, 13>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 13>(std::istream &input, std::ostream &output) {
+    const std::string div1 = "[[2]]";
+    const std::string div2 = "[[6]]";
+    std::vector<std::string> packets{div1, div2};
+    std::copy(std::istream_iterator<std::string>(input),
+              std::istream_iterator<std::string>(),
+              std::back_inserter(packets));
+    std::sort(packets.begin(), packets.end(), Order{});
+    auto p1 = std::find(packets.begin(), packets.end(), div1);
+    auto p2 = std::find(p1, packets.end(), div2);
+    auto f1 = 1 + std::distance(packets.begin(), p1);
+    auto f2 = 1 + std::distance(packets.begin(), p2);
+    output << f1 * f2 << '\n';
+}
 
 } // namespace advent::common
