@@ -3,12 +3,12 @@
 #include <algorithm>
 #include <cassert>
 #include <charconv>
+#include <iostream>
 #include <istream>
 #include <iterator>
 #include <ostream>
 #include <string>
 #include <vector>
-#include <iostream>
 
 namespace advent::common {
 
@@ -130,11 +130,14 @@ enum SandState {
     e_Sand,
 };
 
-std::ostream& operator<<(std::ostream& stream, SandState state) {
+std::ostream &operator<<(std::ostream &stream, SandState state) {
     switch (state) {
-        case e_Empty: return stream << '.';
-        case e_Wall: return stream << '#';
-        case e_Sand: return stream << 'o';
+    case e_Empty:
+        return stream << '.';
+    case e_Wall:
+        return stream << '#';
+    case e_Sand:
+        return stream << 'o';
     }
     throw std::runtime_error("Invalid enum value");
 }
@@ -163,7 +166,7 @@ void drawWalls(FieldT<SandState> &field, std::vector<Leg> const &legs) {
     }
 }
 
-bool dropSandUnit(FieldT<SandState> &field) {
+bool dropSandUnitVoid(FieldT<SandState> &field) {
     Index2D cur = sandSource;
     for (;;) {
         const Index2D prev = cur;
@@ -187,9 +190,33 @@ bool dropSandUnit(FieldT<SandState> &field) {
     }
 }
 
-void printField(FieldT<SandState> const& field, std::ostream& stream, std::ptrdiff_t skipCols) {
+bool dropSandUnitFill(FieldT<SandState> &field) {
+    Index2D cur = sandSource;
+    for (;;) {
+        const Index2D prev = cur;
+        ++cur.row;
+        if (cur.row < field.dim.rows) {
+            if (field[cur] == e_Empty) {
+                continue;
+            }
+            --cur.col;
+            if (field[cur] == e_Empty) {
+                continue;
+            }
+            cur.col += 2;
+            if (field[cur] == e_Empty) {
+                continue;
+            }
+        }
+        field[prev] = e_Sand;
+        return prev != sandSource;
+    }
+}
+
+void printField(FieldT<SandState> const &field, std::ostream &stream,
+                std::ptrdiff_t skipCols) {
     auto it = field.data.begin();
-    for (; it < field.data.end(); ) {
+    for (; it < field.data.end();) {
         auto start = it + skipCols;
         it += field.dim.columns;
         std::copy(start, it, std::ostream_iterator<SandState>(stream));
@@ -215,14 +242,42 @@ template <> void puzzleA<2022, 14>(std::istream &input, std::ostream &output) {
     FieldT<SandState> field(Dim{e.highest.col, e.highest.row});
     drawWalls(field, legs);
     int num = 0;
-    while (dropSandUnit(field))
+    while (dropSandUnitVoid(field))
         ++num;
 
-    //printField(field, std::clog, e.lowest.col);
+    // printField(field, std::clog, e.lowest.col);
 
     output << num << '\n';
 }
 
-template <> void puzzleB<2022, 14>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 14>(std::istream &input, std::ostream &output) {
+    std::vector<Leg> legs(std::istream_iterator<Leg>{input},
+                          std::istream_iterator<Leg>{});
+    Extends e{sandSource};
+    std::for_each(legs.begin(), legs.end(),
+                  [&e](Leg leg) { e.record(leg.toPos); });
+    e.increase();
+
+    // We won't optimise skipping the empty cols zero to lowest.col:
+    if (e.lowest.row != sandSource.row) {
+        throw std::runtime_error(
+            "Encountered a row number above the source of sand");
+    }
+
+    // Resize for diagonal from sandSource.
+    e.record(Index2D{e.highest.row + 1, sandSource.col + e.highest.row + 2});
+
+    FieldT<SandState> field(Dim{e.highest.col, e.highest.row});
+    //output << e.highest.row << "r c" << e.highest.col << '\n';
+
+    drawWalls(field, legs);
+    int num = 1;  // start at 1 for the sandSource
+    while (dropSandUnitFill(field))
+        ++num;
+
+    // printField(field, std::clog, e.lowest.col);
+
+    output << num << '\n';
+}
 
 } // namespace advent::common
