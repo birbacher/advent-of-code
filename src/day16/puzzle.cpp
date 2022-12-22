@@ -43,7 +43,7 @@ std::ptrdiff_t getFlow(State const &s, std::ptrdiff_t remainingTime,
 }
 
 struct IterState {
-    std::vector<bool> used;
+    std::vector<signed char> used;
     std::vector<Graph::vertex_descriptor> order;
     std::ptrdiff_t result{};
 
@@ -84,19 +84,74 @@ struct IterState {
                 someFound = true;
 
                 auto next = s.valves.at(i);
-                //order.push_back(next);
+                // order.push_back(next);
 
                 auto distance = s.dist[from][next];
                 auto nextRem = rem - 1 - distance;
                 run2(next, s, nextRem, sum + get(mapRate, next) * nextRem);
 
-                //order.pop_back();
+                // order.pop_back();
                 used.at(i) = false;
             }
         }
         if (someFound == false) {
-            //auto f = getFlow(s, 30, order);
+            // auto f = getFlow(s, 30, order);
             result = std::max(result, sum);
+        }
+    }
+
+    void run3(Graph::vertex_descriptor from1, std::ptrdiff_t arrives1,
+              Graph::vertex_descriptor from2, std::ptrdiff_t arrives2, State &s,
+              std::ptrdiff_t rem, std::ptrdiff_t sum) {
+        //std::clog << rem << ' ' << arrives1 << ' ' << arrives2 << '\n';
+        auto mapRate = get(flow_rate_t{}, s.g);
+        auto mapId = get(ccid_t{}, s.g);
+
+        bool someFound = false;
+        if (rem > 0) {
+            // signed char who = arrives1 <= arrives2 ? 1 : 2;
+            for (std::size_t i = 0; i < s.valves.size(); ++i) {
+                if (used.at(i))
+                    continue;
+                used.at(i) = true;
+                someFound = true;
+
+                auto next = s.valves.at(i);
+                // order.push_back(next);
+
+                auto from = arrives1 == 0 ? from1 : from2;
+                auto distance = s.dist[from][next] + 1;
+                auto factor = std::max<std::ptrdiff_t>(rem - distance, 0);
+                auto newSum = sum + get(mapRate, next) * factor;
+                //std::clog << "At " << rem
+                //        << " from " << get(mapId, from)
+                //        << " to " << get(mapId, next)
+                //        << " in " << distance
+                //        << " sum += " << (get(mapRate, next) * factor)
+                //        << '\n';
+                if (arrives1 == 0) {
+                    auto advances = std::min(distance, arrives2);
+                    auto nextRem = rem - advances;
+                    run3(next, distance - advances, from2, arrives2 - advances, s, nextRem,
+                         newSum);
+                } else {
+                    auto advances = std::min(arrives1, distance);
+                    auto nextRem = rem - advances;
+                    run3(from1, arrives1 - advances, next, distance - advances, s, nextRem,
+                         newSum);
+                }
+
+                // order.pop_back();
+                used.at(i) = false;
+            }
+        }
+        if (someFound == false) {
+            // auto f = getFlow(s, 30, order);
+            if (result < sum) {
+                std::clog << "New sum: " << sum << std::endl;
+                result = sum;
+            }
+            //result = std::max(result, sum);
         }
     }
 };
@@ -112,20 +167,20 @@ template <> void puzzleA<2022, 16>(std::istream &input, std::ostream &output) {
     State s;
     loadState(s, lines);
 
-    /*
-    std::vector route = {
-        s.vs.at("AA"_cc), s.vs.at("DD"_cc), s.vs.at("BB"_cc), s.vs.at("JJ"_cc),
-        s.vs.at("HH"_cc), s.vs.at("EE"_cc), s.vs.at("CC"_cc),
-    };
-
-    output << getFlow(s, 30, route) << '\n';
-    */
-
     IterState is(s.valves.size());
     is.run2(s.src, s, 30, 0);
     output << is.result << '\n';
 }
 
-template <> void puzzleB<2022, 16>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 16>(std::istream &input, std::ostream &output) {
+    std::vector lines = readInput(input);
+
+    State s;
+    loadState(s, lines);
+
+    IterState is(s.valves.size());
+    is.run3(s.src, 0, s.src, 0, s, 26, 0);
+    output << is.result << '\n';
+}
 
 } // namespace advent::common
