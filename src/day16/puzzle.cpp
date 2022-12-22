@@ -46,6 +46,7 @@ struct IterState {
     std::vector<signed char> used;
     std::vector<Graph::vertex_descriptor> order;
     std::ptrdiff_t result{};
+    std::ptrdiff_t remFlow{};
 
     IterState(std::size_t n) : used(n, false) { order.reserve(n); }
 
@@ -103,6 +104,10 @@ struct IterState {
     void run3(Graph::vertex_descriptor from1, std::ptrdiff_t arrives1,
               Graph::vertex_descriptor from2, std::ptrdiff_t arrives2, State &s,
               std::ptrdiff_t rem, std::ptrdiff_t sum) {
+        if (remFlow * rem + sum < result) {
+            //std::clog << '.';
+            return;
+        }
         //std::clog << rem << ' ' << arrives1 << ' ' << arrives2 << '\n';
         auto mapRate = get(flow_rate_t{}, s.g);
         auto mapId = get(ccid_t{}, s.g);
@@ -118,16 +123,18 @@ struct IterState {
 
                 auto next = s.valves.at(i);
                 // order.push_back(next);
+                auto rate = get(mapRate, next);
+                remFlow -= rate;
 
                 auto from = arrives1 == 0 ? from1 : from2;
                 auto distance = s.dist[from][next] + 1;
                 auto factor = std::max<std::ptrdiff_t>(rem - distance, 0);
-                auto newSum = sum + get(mapRate, next) * factor;
+                auto newSum = sum + rate * factor;
                 //std::clog << "At " << rem
                 //        << " from " << get(mapId, from)
                 //        << " to " << get(mapId, next)
                 //        << " in " << distance
-                //        << " sum += " << (get(mapRate, next) * factor)
+                //        << " sum += " << rate * factor)
                 //        << '\n';
                 if (arrives1 == 0) {
                     auto advances = std::min(distance, arrives2);
@@ -141,6 +148,7 @@ struct IterState {
                          newSum);
                 }
 
+                remFlow += rate;
                 // order.pop_back();
                 used.at(i) = false;
             }
@@ -179,6 +187,10 @@ template <> void puzzleB<2022, 16>(std::istream &input, std::ostream &output) {
     loadState(s, lines);
 
     IterState is(s.valves.size());
+    auto mapRate = get(flow_rate_t{}, s.g);
+    for (auto v : s.valves) {
+        is.remFlow += get(mapRate, v);
+    }
     is.run3(s.src, 0, s.src, 0, s, 26, 0);
     output << is.result << '\n';
 }
