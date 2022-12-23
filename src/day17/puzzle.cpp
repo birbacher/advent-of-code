@@ -72,18 +72,18 @@ struct ItemsRing {
     }
 };
 
-void shiftLeft(ItemU &i) {
+void shiftLeft(ItemU &i, int n) {
     constexpr Field msb = 0b010'00000u; // 7bit highest bit
     constexpr ItemU mask = getU({msb, msb, msb, msb});
     if (0 == (i & mask)) {
-        i <<= 1;
+        i <<= n;
     }
 }
-void shiftRight(ItemU &i) {
+void shiftRight(ItemU &i, int n) {
     constexpr Field msb = 0b000'00001u; // 7bit lowest bit
     constexpr ItemU mask = getU({msb, msb, msb, msb});
     if (0 == (i & mask)) {
-        i >>= 1;
+        i >>= n;
     }
 }
 
@@ -177,21 +177,20 @@ std::size_t computeHeight(JetsRing &jets, ItemsRing &items, std::size_t iters) {
     std::vector<Field> tower;
     for (std::size_t i = 0; i < iters; ++i) {
         adjustFreeSpace(tower, counter);
-        auto pos = tower.rbegin();
+        auto pos = tower.rbegin() + spawnFree;
         auto bottom = tower.rend() - blockHeight;
 
         auto item = items.next();
+        for (int pre = 0; pre < spawnFree; ++pre) {
+            auto dir = jets.next();
+            shiftLeft(item, 1 ^ int(dir));
+            shiftRight(item, int(dir));
+        }
         for (;;) {
             auto tmp = item;
             auto dir = jets.next();
-            switch (dir) {
-            case Dir::left:
-                shiftLeft(tmp);
-                break;
-            case Dir::right:
-                shiftRight(tmp);
-                break;
-            }
+            shiftLeft(tmp, 1 ^ int(dir));
+            shiftRight(tmp, int(dir));
             if (!overlap(pos, tmp)) {
                 item = tmp;
             }
@@ -225,8 +224,8 @@ template <> void puzzleB<2022, 17>(std::istream &input, std::ostream &output) {
     JetsRing jets(input);
     ItemsRing items{};
 
-    constexpr std::size_t iters = 1'000'000'000'000; // 1 TB
-    // constexpr std::size_t iters   =       100'000'000;
+    // constexpr std::size_t iters = 1'000'000'000'000; // 1 TB
+    constexpr std::size_t iters   =       100'000'000;
     output << computeHeight(jets, items, iters) << '\n';
 }
 
