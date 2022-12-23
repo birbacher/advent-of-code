@@ -2,9 +2,10 @@
 
 #include <algorithm>
 #include <array>
-#include <cstdint>
 #include <cassert>
 #include <charconv>
+#include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <istream>
 #include <iterator>
@@ -40,64 +41,74 @@ using Jets = std::vector<Dir>;
 
 /// @brief lower 7 bits used, the MSB is left, the LSB is right
 using Field = std::uint8_t;
-/// @brief Rows that define an item, higher indices are to the bottom of the item.
+/// @brief Rows that define an item, higher indices are to the bottom of the
+/// item.
 using Item = std::array<Field, blockHeight>;
+/// @brief Rows that define an item, higher nibbles are to the bottom of the
+/// item.
 using ItemU = std::uint32_t;
 
-/// @brief All possible parts aligned to the bottom and two positions from the left.
-constexpr std::array<Item, 5> items = {{
-    {0b000'00000u, 0b000'00000u, 0b000'00000u, 0b000'11110u},
-    {0b000'00000u, 0b000'01000u, 0b000'11100u, 0b000'01000u},
-    {0b000'00000u, 0b000'00100u, 0b000'00100u, 0b000'11100u},
-    {0b000'10000u, 0b000'10000u, 0b000'10000u, 0b000'10000u},
-    {0b000'00000u, 0b000'00000u, 0b000'11000u, 0b000'11000u},
+constexpr ItemU getU(Item i) {
+    return i.at(0) | (i.at(1) << 8) | (i.at(2) << 16) | (i.at(3) << 24);
+}
+
+/// @brief All possible parts aligned to the bottom and two positions from the
+/// left.
+constexpr std::array<ItemU, 5> items = {{
+    {0b000'11110'000'00000'000'00000'000'00000u},
+    {0b000'01000'000'11100'000'01000'000'00000u},
+    {0b000'11100'000'00100'000'00100'000'00000u},
+    {0b000'10000'000'10000'000'10000'000'10000u},
+    {0b000'11000'000'11000'000'00000'000'00000u},
 }};
 
 struct ItemsRing {
     std::size_t itemIndex{};
 
-    Item next() {
-        Item i = items.at(itemIndex);
+    ItemU next() {
+        ItemU i = items.at(itemIndex);
         itemIndex = (itemIndex + 1) % items.size();
         return i;
     }
 };
 
-bool shiftLeft(Field &f) {
-    if (0b0'10'00000u & f) {
-        return false;
+void shiftLeft(ItemU &i) {
+    constexpr Field msb = 0b010'00000u; // 7bit highest bit
+    constexpr ItemU mask = getU({msb, msb, msb, msb});
+    if (0 == (i & mask)) {
+        i <<= 1;
     }
-    f <<= 1;
-    return true;
 }
-bool shiftRight(Field &f) {
-    if (0b0'00'00001u & f) {
-        return false;
+void shiftRight(ItemU &i) {
+    constexpr Field msb = 0b000'00001u; // 7bit lowest bit
+    constexpr ItemU mask = getU({msb, msb, msb, msb});
+    if (0 == (i & mask)) {
+        i >>= 1;
     }
-    f >>= 1;
-    return true;
-}
-bool shiftLeft(Item &i) {
-    Item c = i;
-    bool ok = true;
-    for (auto &f : c) {
-        ok = ok && shiftLeft(f);
-    }
-    if (ok) i = c;
-    //std::clog << "  << " << ok << '\n';
-    return ok;
-}
-bool shiftRight(Item &i) {
-    Item c = i;
-    bool ok = true;
-    for (auto &f : c) {
-        ok = ok && shiftRight(f);
-    }
-    if (ok) i = c;
-    //std::clog << "  >> " << ok << '\n';
-    return ok;
 }
 
+ItemU bswp(ItemU u) {
+    auto op = [u](int s, int l) { return ((u >> l) & 0xff) << s; };
+    return op(24, 0) | op(16, 8) | op(8, 16) | op(0, 24);
+}
+
+ItemU getU(std::vector<Field>::const_reverse_iterator rit) {
+    auto *const p = &*(rit.base() - 4);
+    ItemU u;
+    std::memcpy(&u, p, 4);
+    return bswp(u);
+}
+
+void putU(std::vector<Field>::reverse_iterator rit, ItemU u) {
+    auto *const p = &*(rit.base() - 4);
+    u = bswp(u);
+    std::memcpy(p, &u, 4);
+}
+
+bool overlap(std::vector<Field>::const_reverse_iterator rit, ItemU i) {
+    return getU(rit) & i;
+}
+/*
 template <typename I1, typename I2>
 bool overlap(I1 i1, I2 i2) {
     for (int i = 0; i < blockHeight; ++i) {
@@ -107,14 +118,14 @@ bool overlap(I1 i1, I2 i2) {
     }
     return false;
 }
-
+*/
 struct JetsRing {
     Jets jets;
     std::size_t jetsIndex{};
 
     JetsRing(std::istream &input)
-    : jets(std::istream_iterator<Dir>{input}, std::istream_iterator<Dir>{})
-    {}
+        : jets(std::istream_iterator<Dir>{input},
+               std::istream_iterator<Dir>{}) {}
 
     Dir next() {
         Dir d = jets.at(jetsIndex);
@@ -128,30 +139,44 @@ void adjustFreeSpace(std::vector<Field> &vec) {
     auto last = vec.rend();
     int numFree{};
     for (int i = 0; i < spaceTotal; ++i) {
-        if (first == last) break;
-        if (*first != 0) break;
+        if (first == last)
+            break;
+        if (*first != 0)
+            break;
         ++numFree;
         ++first;
     }
-    //std::clog << "Free space: " << numFree << '\n';
+    // std::clog << "Free space: " << numFree << '\n';
     vec.resize(vec.size() + spaceTotal - numFree);
 }
 
-template <typename I1, typename I2>
-void manifest(I1 i1, I2 i2) {
-    std::transform(i1, i1 + blockHeight, i2, i1, std::bit_or<Field>{});
+void adjustFreeSpace(std::vector<Field> &vec, std::size_t &counter) {
+    adjustFreeSpace(vec);
+    if (vec.size() > 10'000) {
+        Field accu{};
+        auto pos = vec.rbegin() + spaceTotal;
+        for (;;) {
+            if (pos == vec.rend())
+                return;
+            accu |= *pos;
+            if (accu == 0b011'11111u)
+                break;
+            ++pos;
+        }
+        counter += std::distance(pos, vec.rend());
+        vec.erase(vec.begin(), pos.base());
+    }
 }
 
-} // namespace
+void manifest(std::vector<Field>::reverse_iterator rit, ItemU i) {
+    putU(rit, getU(rit) | i);
+}
 
-template <> void puzzleA<2022, 17>(std::istream &input, std::ostream &output) {
-    JetsRing jets(input);
-    ItemsRing items{};
-
+std::size_t computeHeight(JetsRing &jets, ItemsRing &items, std::size_t iters) {
+    std::size_t counter = 0;
     std::vector<Field> tower;
-    for (int i = 0; i < 2022; ++i) {
-        adjustFreeSpace(tower);
-        //std::clog << 'r' << tower.size() - spaceTotal << '\n';
+    for (std::size_t i = 0; i < iters; ++i) {
+        adjustFreeSpace(tower, counter);
         auto pos = tower.rbegin();
         auto bottom = tower.rend() - blockHeight;
 
@@ -160,24 +185,49 @@ template <> void puzzleA<2022, 17>(std::istream &input, std::ostream &output) {
             auto tmp = item;
             auto dir = jets.next();
             switch (dir) {
-                case Dir::left: shiftLeft(tmp); break;
-                case Dir::right: shiftRight(tmp); break;
+            case Dir::left:
+                shiftLeft(tmp);
+                break;
+            case Dir::right:
+                shiftRight(tmp);
+                break;
             }
-            if (!overlap(pos, tmp.begin())) {
+            if (!overlap(pos, tmp)) {
                 item = tmp;
             }
-            if (pos == bottom) break;
-            if (overlap(pos + 1, item.begin())) break;
+            if (pos == bottom)
+                break;
+            if (overlap(pos + 1, item))
+                break;
             ++pos;
         }
-        manifest(pos, item.begin());
-        //std::clog << +tower.front() << '#' << std::distance(tower.begin(), pos.base()) << '\n';
-        //std::clog << tower.size() - std::count(tower.begin(), tower.end(), 0u) << '\n';
+        manifest(pos, item);
+
+        // std::clog << +tower.front() << '#' << std::distance(tower.begin(),
+        // pos.base()) << '\n'; std::clog << tower.size() -
+        // std::count(tower.begin(), tower.end(), 0u) << '\n';
     }
-    adjustFreeSpace(tower);
-    output << tower.size() - spaceTotal << '\n';
+    adjustFreeSpace(tower, counter);
+    return counter + tower.size() - spaceTotal;
 }
 
-template <> void puzzleB<2022, 17>(std::istream &input, std::ostream &output) {}
+} // namespace
+
+template <> void puzzleA<2022, 17>(std::istream &input, std::ostream &output) {
+    JetsRing jets(input);
+    ItemsRing items{};
+
+    constexpr std::size_t iters = 2022;
+    output << computeHeight(jets, items, iters) << '\n';
+}
+
+template <> void puzzleB<2022, 17>(std::istream &input, std::ostream &output) {
+    JetsRing jets(input);
+    ItemsRing items{};
+
+    constexpr std::size_t iters = 1'000'000'000'000; // 1 TB
+    // constexpr std::size_t iters   =       100'000'000;
+    output << computeHeight(jets, items, iters) << '\n';
+}
 
 } // namespace advent::common
