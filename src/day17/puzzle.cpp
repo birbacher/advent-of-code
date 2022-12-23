@@ -175,10 +175,39 @@ void manifest(std::vector<Field>::reverse_iterator rit, ItemU i) {
 std::size_t computeHeight(JetsRing &jets, ItemsRing &items, std::size_t iters) {
     std::size_t counter = 0;
     std::vector<Field> tower;
+    std::vector<signed char> hits(jets.jets.size());
+    std::vector<std::size_t> hitSize(jets.jets.size());
+    std::vector<std::size_t> hitIter(jets.jets.size());
+    bool asBeforeDone = false;
     for (std::size_t i = 0; i < iters; ++i) {
         adjustFreeSpace(tower, counter);
         auto pos = tower.rbegin() + spawnFree;
         auto bottom = tower.rend() - blockHeight;
+
+        if (asBeforeDone == false && items.itemIndex == 0) {
+            if (hits.at(jets.jetsIndex) > 4) {
+                auto hNow = counter + tower.size() - spaceTotal;
+                auto hOld = hitSize.at(jets.jetsIndex);
+                auto hIter = i - hitIter.at(jets.jetsIndex);
+                auto rem = iters - i - 1'000;
+                rem /= hIter;
+                i += hIter * rem;
+                counter += (hNow - hOld) * rem;
+                std::clog << "speedup " << jets.jetsIndex << ": " << ((hNow - hOld) * rem) << " with " << hIter << '\n';
+                asBeforeDone = true;
+            }
+            else {
+                ++hits.at(jets.jetsIndex);
+                auto hNow = counter + tower.size() - spaceTotal;
+                auto &hOld = hitSize.at(jets.jetsIndex);
+                if (jets.jetsIndex == 3017) {
+                    std::clog << "3017 = +" << (hNow - hOld) << " at " << i << '\n';
+                }
+                hOld = hNow;
+                hitIter.at(jets.jetsIndex) = i;
+            }
+        }
+
 
         auto item = items.next();
         for (int pre = 0; pre < spawnFree; ++pre) {
@@ -224,8 +253,8 @@ template <> void puzzleB<2022, 17>(std::istream &input, std::ostream &output) {
     JetsRing jets(input);
     ItemsRing items{};
 
-    // constexpr std::size_t iters = 1'000'000'000'000; // 1 TB
-    constexpr std::size_t iters   =       100'000'000;
+    constexpr std::size_t iters = 1'000'000'000'000; // 1 TB
+    //constexpr std::size_t iters   =       100'000'000;
     output << computeHeight(jets, items, iters) << '\n';
 }
 
