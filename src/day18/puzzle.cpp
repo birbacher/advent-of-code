@@ -74,27 +74,6 @@ Index3D maxCoord(std::vector<Index3D> const &vec) {
 
 using Row = std::uint32_t;
 
-struct OneSide {
-    OneSide(Index3D i) : columns(i.x + 1) {}
-
-    std::vector<Row> columns;
-
-    void set(Index3D i) { columns.at(i.x) &= (1u << i.y); }
-
-    template <typename Op> void updateWith(OneSide const &other, Op op) {
-        for (std::size_t i = 0; i < columns.size(); ++i) {
-            auto &me = columns.at(i);
-            me = op(me, other.columns.at(i));
-        }
-    }
-
-    std::size_t count() const {
-        return std::accumulate(
-            columns.begin(), columns.end(), std::size_t{0},
-            [](std::size_t sum, Row r) { return sum + __builtin_popcount(r); });
-    }
-};
-
 } // namespace
 
 template <> void puzzleA<2022, 18>(std::istream &input, std::ostream &output) {
@@ -103,11 +82,6 @@ template <> void puzzleA<2022, 18>(std::istream &input, std::ostream &output) {
 
     /*
     const auto mc = maxCoord(inputData);
-    OneSide s(mc);
-    for (Index3D i : inputData) {
-        s.set(i);
-    }
-    output << s.count() << '\n';
     */
 
     std::size_t n = 0;
