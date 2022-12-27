@@ -73,6 +73,12 @@ struct Index3D {
     friend Index3D operator+(Index3D lhs, Index3D rhs) {
         return {lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z};
     }
+    Index3D &operator+=(int delta) {
+        x += delta;
+        y += delta;
+        z += delta;
+        return *this;
+    }
 };
 
 Index3D maxCoord(std::vector<Index3D> const &vec) {
@@ -345,11 +351,11 @@ template <> void puzzleB<2022, 18>(std::istream &input, std::ostream &output) {
     std::vector inputData(std::istream_iterator<Index3D>{input},
                           std::istream_iterator<Index3D>{});
     auto mc = maxCoord(inputData);
-    ++mc.x;
-    ++mc.y;
-    ++mc.z;
+    mc += 1; // increase to past-the-end
+    mc += 2; // account for free borders around everything
     Field f({mc.x, mc.y, mc.z});
     for (Index3D i : inputData) {
+        i += 1; // move for free border
         f[i] = 1;
     }
 
