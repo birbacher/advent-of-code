@@ -176,14 +176,9 @@ int search(Blueprint const &bl, Robots const &robots, Resources const &res,
     }
 
     // Otherwise, try producing resources for the remaining time:
-    if (result == 0) {
-        int tmpMin = remainingMinutes;
-        Resources tmpRes = res;
-        while (tmpMin) {
-            --tmpMin;
-            produceResources(tmpRes, robots);
-        }
-        return tmpRes.numGeodes;
+    {
+        int extraGeodes = remainingMinutes * robots.numGeodeRobots;
+        result = std::max(result, res.numGeodes + extraGeodes);
     }
 
     return result;
