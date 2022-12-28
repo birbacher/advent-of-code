@@ -31,6 +31,8 @@ struct ExpectString {
     std::string expectedString;
     char delim{};
 
+    ExpectString operator[](char newDelim) &&;
+
     void read(std::istream &stream) const;
     friend std::istream &operator>>(std::istream &stream,
                                     ExpectString const &es) {

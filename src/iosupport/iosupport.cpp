@@ -43,6 +43,11 @@ void ExpectChar::read(std::istream &stream) const {
     }
 }
 
+ExpectString ExpectString::operator[](char newDelim) && {
+    this->delim = newDelim;
+    return std::move(*this);
+}
+
 void ExpectString::read(std::istream &stream) const {
     if (!stream) {
         return;

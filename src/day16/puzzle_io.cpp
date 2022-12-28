@@ -19,14 +19,13 @@ std::ostream &operator<<(std::ostream &stream, CharCharId id) {
 }
 
 using iosupport::literals::operator""_e;
-using iosupport::ExpectString;
 
 std::istream &operator>>(std::istream &stream, Line &line) {
     // Some lines use "tunnels lead" and others "tunnel leads".
     // Just ignore both.  Same for "valves" and "valve".
     std::string tmp;
     stream >> "Valve"_e >> line.id >> "has"_e >> "flow"_e >>
-        ExpectString{"rate", '='} >> line.flowRate >> ';'_e >> tmp >> tmp >>
+        "rate"_e['='] >> line.flowRate >> ';'_e >> tmp >> tmp >>
         "to"_e >> tmp;
     line.edges.clear();
     for (; stream;) {
