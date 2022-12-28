@@ -1,5 +1,7 @@
 #include "adventofcode.hpp"
 
+#include "iosupport/iosupport.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <charconv>
@@ -14,19 +16,7 @@ namespace advent::common {
 
 namespace {
 
-struct ExpectChar {
-    char c;
-    friend std::istream &operator>>(std::istream &stream, ExpectChar ec) {
-        char tmp;
-        if (stream >> tmp) {
-            if (tmp != ec.c) {
-                stream.putback(tmp);
-                stream.setstate(std::ios_base::failbit);
-            }
-        }
-        return stream;
-    }
-};
+using iosupport::ExpectChar;
 
 struct ExpectString {
     std::string str;

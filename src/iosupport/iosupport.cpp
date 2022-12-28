@@ -1,17 +1,14 @@
 #include "iosupport/iosupport.hpp"
 
-#include <istream>
 #include <fstream>
+#include <istream>
 #include <iterator>
 #include <stdexcept>
 
 namespace advent::iosupport {
 
-void loadFileInLines(
-        std::istream& stream,
-        std::function<void (std::string_view)> const& perLine
-    )
-{
+void loadFileInLines(std::istream &stream,
+                     std::function<void(std::string_view)> const &perLine) {
     std::string line;
     while (std::getline(stream, line)) {
         perLine(line);
@@ -20,21 +17,30 @@ void loadFileInLines(
         throw std::runtime_error("Could not fully read the input file");
 }
 
-auto loadFileInLines(std::istream& stream)
-    -> std::vector<std::string>
-{
+auto loadFileInLines(std::istream &stream) -> std::vector<std::string> {
     std::vector<std::string> result;
-    loadFileInLines(stream, [&result](std::string_view sv) { result.emplace_back(sv); });
+    loadFileInLines(
+        stream, [&result](std::string_view sv) { result.emplace_back(sv); });
     return result;
 }
 
-auto loadFileInLines(std::filesystem::path const& filePath)
-    -> std::vector<std::string>
-{
+auto loadFileInLines(std::filesystem::path const &filePath)
+    -> std::vector<std::string> {
     std::ifstream file(filePath);
-    if (!file) throw std::runtime_error("Could not open input file");
+    if (!file)
+        throw std::runtime_error("Could not open input file");
 
     return loadFileInLines(file);
 }
 
+void ExpectChar::read(std::istream &stream) const {
+    char tmp;
+    if (stream >> tmp) {
+        if (tmp != this->expectedChar) {
+            stream.putback(tmp);
+            stream.setstate(std::ios_base::failbit);
+        }
+    }
 }
+
+} // namespace advent::iosupport

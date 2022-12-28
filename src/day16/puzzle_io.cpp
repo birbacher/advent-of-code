@@ -1,5 +1,7 @@
 #include "day16/puzzle.hpp"
 
+#include "iosupport/iosupport.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <charconv>
@@ -18,19 +20,7 @@ std::ostream &operator<<(std::ostream &stream, CharCharId id) {
 
 namespace {
 
-struct ExpectChar {
-    char c;
-    friend std::istream &operator>>(std::istream &stream, ExpectChar ec) {
-        char tmp;
-        if (stream >> tmp) {
-            if (tmp != ec.c) {
-                stream.putback(tmp);
-                stream.setstate(std::ios_base::failbit);
-            }
-        }
-        return stream;
-    }
-};
+using iosupport::ExpectChar;
 
 ExpectChar operator""_e(char c) { return {c}; }
 
