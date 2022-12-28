@@ -18,18 +18,8 @@ std::ostream &operator<<(std::ostream &stream, CharCharId id) {
     return stream << id.c1 << id.c2;
 }
 
-namespace {
-
-using iosupport::ExpectChar;
+using iosupport::literals::operator""_e;
 using iosupport::ExpectString;
-
-ExpectChar operator""_e(char c) { return {c}; }
-
-ExpectString operator""_e(char const *cstr, std::size_t len) {
-    return {{cstr, len}};
-}
-
-} // namespace
 
 std::istream &operator>>(std::istream &stream, Line &line) {
     // Some lines use "tunnels lead" and others "tunnel leads".

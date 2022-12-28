@@ -16,8 +16,7 @@ namespace advent::common {
 
 namespace {
 
-using iosupport::ExpectChar;
-using iosupport::ExpectString;
+using iosupport::literals::operator""_e;
 
 struct Index2D {
     std::ptrdiff_t row{}, col{};
@@ -30,18 +29,16 @@ struct Index2D {
         return stream << '(' << 'r' << pos.row << ' ' << 'c' << pos.col << ')';
     }
     friend std::istream &operator>>(std::istream &stream, Index2D &pos) {
-        return stream >> ExpectChar{'x'} >> ExpectChar{'='} >> pos.col >>
-               ExpectChar{','} >> ExpectChar{'y'} >> ExpectChar{'='} >> pos.row;
+        return stream >> 'x'_e >> '='_e >> pos.col >> ','_e >> 'y'_e >> '='_e >>
+               pos.row;
     }
 };
 
 struct Line {
     Index2D sensor, beacon;
     friend std::istream &operator>>(std::istream &stream, Line &line) {
-        return stream >> ExpectString{"Sensor"} >> ExpectString{"at"} >>
-               line.sensor >> ExpectChar{':'} >> ExpectString{"closest"} >>
-               ExpectString{"beacon"} >> ExpectString{"is"} >>
-               ExpectString{"at"} >> line.beacon;
+        return stream >> "Sensor"_e >> "at"_e >> line.sensor >> ':'_e >>
+               "closest"_e >> "beacon"_e >> "is"_e >> "at"_e >> line.beacon;
     }
 };
 

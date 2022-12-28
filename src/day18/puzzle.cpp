@@ -27,9 +27,7 @@ namespace advent::common {
 
 namespace {
 
-using iosupport::ExpectChar;
-
-ExpectChar operator""_e(char c) { return {c}; }
+using iosupport::literals::operator""_e;
 
 struct Index3D {
     int x{}, y{}, z{};

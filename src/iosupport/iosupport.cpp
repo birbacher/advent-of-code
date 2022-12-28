@@ -63,4 +63,11 @@ void ExpectString::read(std::istream &stream) const {
     }
 }
 
+namespace literals {
+
+ExpectString operator""_e(char const *cstr, std::size_t len) {
+    return {{cstr, len}};
+}
+
+} // namespace literals
 } // namespace advent::iosupport

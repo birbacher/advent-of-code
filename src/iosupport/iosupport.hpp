@@ -39,6 +39,12 @@ struct ExpectString {
     }
 };
 
+namespace literals {
+
+constexpr ExpectChar operator""_e(char c) { return {c}; }
+ExpectString operator""_e(char const *cstr, std::size_t len);
+
+} // namespace literals
 } // namespace advent::iosupport
 
 #endif
