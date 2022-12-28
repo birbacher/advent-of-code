@@ -27,6 +27,18 @@ struct ExpectChar {
     }
 };
 
+struct ExpectString {
+    std::string expectedString;
+    char delim{};
+
+    void read(std::istream &stream) const;
+    friend std::istream &operator>>(std::istream &stream,
+                                    ExpectString const &es) {
+        es.read(stream);
+        return stream;
+    }
+};
+
 } // namespace advent::iosupport
 
 #endif

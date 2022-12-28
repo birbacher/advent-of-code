@@ -17,20 +17,7 @@ namespace advent::common {
 namespace {
 
 using iosupport::ExpectChar;
-
-struct ExpectString {
-    std::string str;
-    friend std::istream &operator>>(std::istream &stream,
-                                    ExpectString const &es) {
-        std::string tmp;
-        if (stream >> tmp) {
-            if (tmp != es.str) {
-                stream.setstate(std::ios_base::failbit);
-            }
-        }
-        return stream;
-    }
-};
+using iosupport::ExpectString;
 
 struct Index2D {
     std::ptrdiff_t row{}, col{};

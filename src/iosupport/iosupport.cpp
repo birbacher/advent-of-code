@@ -43,4 +43,24 @@ void ExpectChar::read(std::istream &stream) const {
     }
 }
 
+void ExpectString::read(std::istream &stream) const {
+    if (!stream) {
+        return;
+    }
+    std::string tmp;
+    if (this->delim != 0) {
+        stream >> std::ws;
+        std::getline(stream, tmp, this->delim);
+    }
+
+    else {
+        stream >> tmp;
+    }
+    if (stream) {
+        if (tmp != this->expectedString) {
+            stream.setstate(std::ios_base::failbit);
+        }
+    }
+}
+
 } // namespace advent::iosupport

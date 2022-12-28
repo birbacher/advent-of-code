@@ -21,34 +21,9 @@ std::ostream &operator<<(std::ostream &stream, CharCharId id) {
 namespace {
 
 using iosupport::ExpectChar;
+using iosupport::ExpectString;
 
 ExpectChar operator""_e(char c) { return {c}; }
-
-struct ExpectString {
-    std::string str;
-    char delim{};
-    friend std::istream &operator>>(std::istream &stream,
-                                    ExpectString const &es) {
-        if (!stream) {
-            return stream;
-        }
-        std::string tmp;
-        if (es.delim != 0) {
-            stream >> std::ws;
-            std::getline(stream, tmp, es.delim);
-        }
-
-        else {
-            stream >> tmp;
-        }
-        if (stream) {
-            if (tmp != es.str) {
-                stream.setstate(std::ios_base::failbit);
-            }
-        }
-        return stream;
-    }
-};
 
 ExpectString operator""_e(char const *cstr, std::size_t len) {
     return {{cstr, len}};
