@@ -19,15 +19,24 @@ namespace advent::common {
 
 namespace {
 
+constexpr std::int64_t decryptionKey = 811589153;
+
+std::vector<std::int64_t> readInput(std::istream &stream, std::int64_t key) {
+    std::vector numbers(std::istream_iterator<std::int64_t>{stream},
+                        std::istream_iterator<std::int64_t>{});
+    std::transform(numbers.begin(), numbers.end(), numbers.begin(),
+                   [key](std::int64_t v) { return key * v; });
+    return numbers;
+}
+
 struct State {
-    const std::vector<int> numbers;
+    const std::vector<std::int64_t> numbers;
     const int indexZero{};
     std::vector<int> numToPos;
     std::vector<int> posToOrigin;
 
-    State(std::istream &stream)
-        : numbers(std::istream_iterator<int>{stream},
-                  std::istream_iterator<int>{}),
+    State(std::istream &stream, std::int64_t key = 1)
+        : numbers(readInput(stream, key)),
           indexZero(std::distance(
               numbers.begin(), std::find(numbers.begin(), numbers.end(), 0))),
           numToPos(numbers.size()) {
@@ -52,8 +61,8 @@ struct State {
         auto res = value % N;
         return res >= 0 ? res : res + N;
     }
-    int mod1(int value) {
-        int N = static_cast<int>(numToPos.size()) - 1;
+    int mod1(std::int64_t value) {
+        std::int64_t N = static_cast<std::int64_t>(numToPos.size()) - 1;
         auto res = value % N;
         return res >= 0 ? res : res + N;
     }
@@ -70,7 +79,7 @@ struct State {
     }
 
     void processOriginalIndex(int i) {
-        auto n = numbers.at(i);
+        std::int64_t n = numbers.at(i);
         auto fromPos = numToPos.at(i);
         auto toPos = mod1(fromPos + n);
         const bool actuallyGoingRight = toPos > fromPos;
@@ -89,9 +98,9 @@ struct State {
         }
     }
 
-    int sum123k() {
+    std::int64_t sum123k() {
         const int posZero = numToPos.at(indexZero);
-        int sum = 0;
+        std::int64_t sum = 0;
         for (int offset : {1000, 2000, 3000}) {
             const int p = mod(posZero + offset);
             sum += numbers.at(posToOrigin.at(p));
@@ -126,6 +135,14 @@ template <> void puzzleA<2022, 20>(std::istream &input, std::ostream &output) {
     // Wrong answer -11930
 }
 
-template <> void puzzleB<2022, 20>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 20>(std::istream &input, std::ostream &output) {
+    State state(input, decryptionKey);
+    state.assertRelation();
+
+    for (int i = 0; i < 10; ++i) {
+        state.mix();
+    }
+    output << state.sum123k() << '\n';
+}
 
 } // namespace advent::common
