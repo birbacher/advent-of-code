@@ -20,16 +20,23 @@ namespace advent::common {
 namespace {
 
 struct State {
-    std::vector<int> const numbers;
+    const std::vector<int> numbers;
+    const int indexZero{};
     std::vector<int> numToPos;
     std::vector<int> posToOrigin;
 
     State(std::istream &stream)
         : numbers(std::istream_iterator<int>{stream},
                   std::istream_iterator<int>{}),
+          indexZero(std::distance(
+              numbers.begin(), std::find(numbers.begin(), numbers.end(), 0))),
           numToPos(numbers.size()) {
         std::iota(numToPos.begin(), numToPos.end(), 0);
         posToOrigin = numToPos;
+
+        if (indexZero == numbers.size()) {
+            throw std::runtime_error("No zero in input");
+        }
     }
 
     auto add(int delta) {
@@ -52,7 +59,6 @@ struct State {
     }
 
     void rotInRange(int src, int mid, int lst) {
-        // std::clog << "rot: " << src << ',' << mid << ',' << lst << '\n';
         auto const b = posToOrigin.begin();
         auto const s = b + src;
         auto const m = b + mid;
@@ -62,89 +68,35 @@ struct State {
         std::rotate(s, m, l);
         assertRelation();
     }
-    /*
-        void swapFrontBack() {
-            // std::clog << "swap\n";
-            int &pf = posToOrigin.front();
-            int &pb = posToOrigin.back();
-            numToPos[pb] = 0;
-            numToPos[pf] = numToPos.size() - 1;
-            std::swap(pf, pb);
-            assertRelation();
-        }
 
-        void rotOutOfBounds(int src, int mid, int lst) {
-            std::clog << "rot: " << src << ',' << mid << ',' << lst << '\n';
-            // Ordered input indices:
-            assert(src <= mid);
-            assert(mid <= lst);
-            if (src == mid || mid == lst)
-                return;
-
-            // Limits to "out of bounds":
-            const int sz = numToPos.size();
-            assert(-sz < src);
-            assert(src < sz);
-            assert(lst < sz * 2);
-            assert(lst - src < sz);
-
-            if (src < 0) {
-                src += sz;
-                mid += sz;
-                lst += sz;
-            }
-            assert(0 <= src);
-            assert(src < sz);
-
-            if (lst <= sz) {
-                rotInRange(src, mid, lst);
-                return;
-            }
-            assert(lst > sz);
-
-            if (mid <= sz) {
-                assert(src + 1 == mid);
-                rotInRange(src, mid, sz);
-                swapFrontBack();
-                rotInRange(0, 1, lst - sz);
-            } else {
-                assert(mid + 1 == lst);
-                rotInRange(0, mid - sz, lst - sz);
-                swapFrontBack();
-                rotInRange(src, sz - 1, sz);
-            }
-        }
-
-        void processOriginalIndex(int i) {
-            auto n = numbers.at(i);
-            auto pos = numToPos.at(i);
-            auto m = mod(pos + n);
-            if (i == m)
-                return;
-            assert(n != 0);
-
-            const int sz = numToPos.size();
-            if (n < 0) {
-                rotOutOfBounds(m - sz, pos, pos + 1);
-            } else if (m < pos) {
-                rotOutOfBounds(pos, pos + 1, m + 1 + sz);
-            } else {
-                rotOutOfBounds(pos, pos + 1, m + 1);
-            }
-        }
-    */
     void processOriginalIndex(int i) {
         auto n = numbers.at(i);
         auto fromPos = numToPos.at(i);
         auto toPos = mod1(fromPos + n);
-        // std::clog << "num " << n << ": " << fromPos << " -> " << toPos <<
-        // '\n';
         const bool actuallyGoingRight = toPos > fromPos;
         if (actuallyGoingRight) {
             rotInRange(fromPos, fromPos + 1, toPos + 1);
         } else {
             rotInRange(toPos, fromPos, fromPos + 1);
         }
+    }
+
+    void mix() {
+        // print(std::clog);
+        for (int i = 0; i < numbers.size(); ++i) {
+            processOriginalIndex(i);
+            // print(std::clog);
+        }
+    }
+
+    int sum123k() {
+        const int posZero = numToPos.at(indexZero);
+        int sum = 0;
+        for (int offset : {1000, 2000, 3000}) {
+            const int p = mod(posZero + offset);
+            sum += numbers.at(posToOrigin.at(p));
+        }
+        return sum;
     }
 
     void assertRelation() {
@@ -167,32 +119,9 @@ struct State {
 template <> void puzzleA<2022, 20>(std::istream &input, std::ostream &output) {
     State state(input);
     state.assertRelation();
-    const auto posZeroInInput =
-        std::find(state.numbers.begin(), state.numbers.end(), 0);
-    if (posZeroInInput == state.numbers.end()) {
-        throw std::runtime_error("No zero in input");
-    }
 
-    // state.print(std::clog);
-    for (int i = 0; i < state.numbers.size(); ++i) {
-        state.processOriginalIndex(i);
-        // state.print(std::clog);
-    }
-
-    const int indexZero = std::distance(state.numbers.begin(), posZeroInInput);
-    const int posZero = state.numToPos.at(indexZero);
-    int sum = 0;
-    for (int offset : {1000, 2000, 3000}) {
-        const int p = state.mod(posZero + offset);
-        sum += state.numbers.at(state.posToOrigin.at(p));
-    }
-    const int p1000 = state.mod(posZero + 1000);
-    const int p2000 = state.mod(posZero + 2000);
-    const int p3000 = state.mod(posZero + 3000);
-    // std::clog << state.numbers.at(state.posToOrigin.at(p1000)) << ' '
-    //           << state.numbers.at(state.posToOrigin.at(p2000)) << ' '
-    //           << state.numbers.at(state.posToOrigin.at(p3000)) << '\n';
-    output << sum << '\n';
+    state.mix();
+    output << state.sum123k() << '\n';
 
     // Wrong answer -11930
 }
