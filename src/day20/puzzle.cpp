@@ -41,8 +41,14 @@ struct State {
     auto sub(int delta) { return add(-delta); }
 
     int mod(int value) {
-        auto res = value % static_cast<int>(numToPos.size());
-        return res >= 0 ? res : res + numToPos.size();
+        int N = static_cast<int>(numToPos.size());
+        auto res = value % N;
+        return res >= 0 ? res : res + N;
+    }
+    int mod1(int value) {
+        int N = static_cast<int>(numToPos.size()) - 1;
+        auto res = value % N;
+        return res >= 0 ? res : res + N;
     }
 
     void rotInRange(int src, int mid, int lst) {
@@ -130,20 +136,12 @@ struct State {
     void processOriginalIndex(int i) {
         auto n = numbers.at(i);
         auto fromPos = numToPos.at(i);
-        auto toPos = mod(fromPos + n);
+        auto toPos = mod1(fromPos + n);
         // std::clog << "num " << n << ": " << fromPos << " -> " << toPos <<
         // '\n';
-        if (fromPos == toPos)
-            return;
-        assert(n != 0); // implies fromPos == toPos
-
-        const bool shouldGoRight = n > 0;
         const bool actuallyGoingRight = toPos > fromPos;
-        if (shouldGoRight) {
-            ++toPos;
-        }
         if (actuallyGoingRight) {
-            rotInRange(fromPos, fromPos + 1, toPos);
+            rotInRange(fromPos, fromPos + 1, toPos + 1);
         } else {
             rotInRange(toPos, fromPos, fromPos + 1);
         }
@@ -175,7 +173,7 @@ template <> void puzzleA<2022, 20>(std::istream &input, std::ostream &output) {
         throw std::runtime_error("No zero in input");
     }
 
-    //state.print(std::clog);
+    // state.print(std::clog);
     for (int i = 0; i < state.numbers.size(); ++i) {
         state.processOriginalIndex(i);
         // state.print(std::clog);
