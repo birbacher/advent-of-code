@@ -128,16 +128,9 @@ struct State {
     }
 };
 
-} // namespace
-
-template <> void puzzleA<2022, 21>(std::istream &input, std::ostream &output) {
-    std::vector lines(std::istream_iterator<Line>{input},
-                      std::istream_iterator<Line>{});
-
-    State state;
-    state.read(lines);
-    state.generateTopoSorted();
-    std::vector<Num> results(num_vertices(state.g));
+void evaluateAll(std::vector<Num> &results, State const &state,
+                 std::vector<Line> const &lines) {
+    results.resize(num_vertices(state.g));
     auto m = get(boost::vertex_index, state.g);
     for (auto vd : state.topoSorted) {
         auto i = get(m, vd);
@@ -153,9 +146,60 @@ template <> void puzzleA<2022, 21>(std::istream &input, std::ostream &output) {
             throw std::logic_error("Unknown choice in variant or empty");
         }
     }
+}
+
+} // namespace
+
+template <> void puzzleA<2022, 21>(std::istream &input, std::ostream &output) {
+    std::vector lines(std::istream_iterator<Line>{input},
+                      std::istream_iterator<Line>{});
+
+    State state;
+    state.read(lines);
+    state.generateTopoSorted();
+    std::vector<Num> results(num_vertices(state.g));
+    evaluateAll(results, state, lines);
+    auto m = get(boost::vertex_index, state.g);
     output << results.at(get(m, state.vertexByName.at("root"))) << '\n';
 }
 
-template <> void puzzleB<2022, 21>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 21>(std::istream &input, std::ostream &output) {
+    std::vector lines(std::istream_iterator<Line>{input},
+                      std::istream_iterator<Line>{});
+
+    State state;
+    state.read(lines);
+    state.generateTopoSorted();
+    std::vector<Num> results(num_vertices(state.g));
+    auto m = get(boost::vertex_index, state.g);
+    auto const vertexRoot = get(m, state.vertexByName.at("root"));
+    auto const vertexHumn = get(m, state.vertexByName.at("humn"));
+    BinOp const &rootOp = std::get<BinOp>(lines.at(vertexRoot).job);
+    auto const vertexRootLhs = get(m, state.vertexByName.at(rootOp.lhs));
+    auto const vertexRootRhs = get(m, state.vertexByName.at(rootOp.rhs));
+
+    evaluateAll(results, state, lines);
+    auto &humnNum =
+        lines.at(vertexHumn).job.emplace<Num>(results.at(vertexHumn));
+    auto &resLhs = results.at(vertexRootLhs);
+    auto &resRhs = results.at(vertexRootRhs);
+    double x = humnNum;
+    auto const computeY = [&] (double asX) {
+        humnNum = asX;
+        evaluateAll(results, state, lines);
+        return resLhs - resRhs;
+    };
+    double y = computeY(x);
+    std::clog << x << ": " << y << '\n';
+    while (resLhs != resRhs) {
+        double dev = (computeY(x + 5) - y) / 5.;
+        x = x - y / dev;
+        y = computeY(x);
+        std::clog << x << ": " << y << '\n';
+    }
+    output << humnNum << '\n';
+
+    // Answer is too high: 3423279932940
+}
 
 } // namespace advent::common
