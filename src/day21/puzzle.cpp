@@ -181,6 +181,7 @@ template <> void puzzleB<2022, 21>(std::istream &input, std::ostream &output) {
     evaluateAll(results, state, lines);
     auto &humnNum =
         lines.at(vertexHumn).job.emplace<Num>(results.at(vertexHumn));
+    humnNum = 0;
     auto &resLhs = results.at(vertexRootLhs);
     auto &resRhs = results.at(vertexRootRhs);
     double x = humnNum;
@@ -190,14 +191,20 @@ template <> void puzzleB<2022, 21>(std::istream &input, std::ostream &output) {
         return resLhs - resRhs;
     };
     double y = computeY(x);
-    std::clog << x << ": " << y << '\n';
+    //std::clog << x << ": " << y << '\n';
     while (resLhs != resRhs) {
         double dev = (computeY(x + 5) - y) / 5.;
         x = x - y / dev;
         y = computeY(x);
-        std::clog << x << ": " << y << '\n';
+        //std::clog << x << ": " << y << '\n';
     }
-    output << humnNum << '\n';
+    Num lastMatch = humnNum;
+    while (resLhs == resRhs) {
+        lastMatch = humnNum;
+        --humnNum;
+        computeY(humnNum);
+    }
+    output << lastMatch << '\n';
 
     // Answer is too high: 3423279932940
 }
