@@ -129,7 +129,7 @@ struct State {
             }
             ++pos.row;
         });
-        //std::clog << "Elves: " << elves.size() << '\n';
+        // std::clog << "Elves: " << elves.size() << '\n';
     }
 
     static bool testPossibleProposal(Probe const &p, Direction d) {
@@ -183,10 +183,11 @@ struct State {
                     consideredDirections.end());
     }
 
-    void runRound() {
+    bool runRound() {
         findAllProposed();
         moveProposed();
         rotateConsideredDirections();
+        return proposed.empty();
     }
 
     std::pair<Index2D, Index2D> getBounding() const {
@@ -229,6 +230,15 @@ template <> void puzzleA<2022, 23>(std::istream &input, std::ostream &output) {
     output << s.countSpace() << '\n';
 }
 
-template <> void puzzleB<2022, 23>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 23>(std::istream &input, std::ostream &output) {
+    State s;
+    s.read(input);
+    for (int i = 1;; ++i) {
+        if (s.runRound()) {
+            output << i << '\n';
+            break;
+        }
+    }
+}
 
 } // namespace advent::common
