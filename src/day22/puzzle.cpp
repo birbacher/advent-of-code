@@ -142,7 +142,7 @@ struct State {
     }
 
     void fillTiles() {
-        std::clog << "gcd: " << tileSize << '\n';
+        // std::clog << "gcd: " << tileSize << '\n';
         Index2D t{};
         char const *p = "ABCDEFGHIJ";
         f.rows.resize(f.rows.size() + tileSize,
@@ -174,15 +174,17 @@ struct State {
 
     std::pair<Index2D, Direction> cube(Index2D i, Direction d) {
         {
-            const auto [tile, offset] = split(i);
-            std::clog << "trace pos " << i << " off " << offset << " dir " << d
-                      << '\n';
+            // const auto [tile, offset] = split(i);
+            // std::clog << "trace pos " << i << " off " << offset << " dir " <<
+            // d
+            //           << '\n';
         }
         std::tie(i, d) = cube_(i, d);
         {
-            const auto [tile, offset] = split(i);
-            std::clog << "   to pos " << i << " off " << offset << " dir " << d
-                      << '\n';
+            // const auto [tile, offset] = split(i);
+            // std::clog << "   to pos " << i << " off " << offset << " dir " <<
+            // d
+            //           << '\n';
         }
         return {i, d};
     }
@@ -275,7 +277,7 @@ struct State {
                 case dirL:
                     return {rotL(offset) + onSq(2, 0), dirD};
                 case dirU:
-                    return {rotR(offset) + onSq(2, 0), dirR};
+                    return {rotR(offset) + onSq(1, 1), dirR};
                 }
                 break;
             }
@@ -338,8 +340,8 @@ struct State {
         } else {
             throw std::runtime_error("Unsupported tile size");
         }
-        std::clog << "pos " << i << '[' << f[i] << "] off " << offset
-                  << " tile " << (tile / tileSize) << " dir " << d << '\n';
+        // std::clog << "pos " << i << '[' << f[i] << "] off " << offset
+        //           << " tile " << (tile / tileSize) << " dir " << d << '\n';
         throw std::runtime_error("invalid wrap");
     }
 
@@ -356,7 +358,7 @@ struct State {
     doStep:
         nextPos = wrap(nextPos + offset);
     doCheck:
-        std::clog << "trace step " << nextPos << " in " << nextDir << '\n';
+        // std::clog << "trace step " << nextPos << " in " << nextDir << '\n';
         switch (f[nextPos]) {
         case ' ':
             goto doStep;
@@ -386,7 +388,7 @@ struct State {
     void move(Move m) {
         if (int *p = std::get_if<int>(&m)) {
             for (int i = 0; i < *p; ++i) {
-                std::clog << "  Move " << *p << '\n';
+                // std::clog << "  Move " << *p << '\n';
                 if (!step())
                     break;
             }
@@ -421,10 +423,10 @@ template <> void puzzleB<2022, 22>(std::istream &input, std::ostream &output) {
     input >> state.f >> moves;
     state.findStart();
     state.fillTiles();
-    for (auto const &r : state.f.rows) {
-        std::clog << r << '\n';
-    }
-    // std::clog << "starts at: " << state.pos << '\n';
+    // for (auto const &r : state.f.rows) {
+    //     std::clog << r << '\n';
+    // }
+    //  std::clog << "starts at: " << state.pos << '\n';
     for (auto m : moves.moves) {
         state.move(m);
     }
