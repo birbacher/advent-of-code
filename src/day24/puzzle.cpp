@@ -125,6 +125,9 @@ struct Plain {
     Dim dim;
     std::vector<Blizzard> blizzards;
 
+    Index2D start;
+    Index2D goal;
+
     void moveBlizzards() {
         for (Blizzard &b : blizzards) {
             b.pos = mod(b.pos + getOffsetsForDir(b.dir), dim);
@@ -239,7 +242,7 @@ void updateField(Field &f, Plain const &p) {
     Field next(f.dim, eBlocked);
 
     // Mark as reachable the places we can go from 'f':
-    next[Index2D{0, 0}] = eReachable; // reachable from start position
+    next[p.start] = eReachable; // reachable from start position
     fillReachableByPrevious(next, f);
 
     // Overwrite everything that is blocked by a blizzard:
@@ -250,6 +253,9 @@ void updateField(Field &f, Plain const &p) {
 
 bool isExitReachable(Field const &f) {
     return f[Index2D{f.dim.rows - 1, f.dim.columns - 1}] == eReachable;
+}
+bool isExitReachable(Field const &f, Index2D pos) {
+    return f[pos] == eReachable;
 }
 
 } // namespace
@@ -262,15 +268,37 @@ template <> void puzzleA<2022, 24>(std::istream &input, std::ostream &output) {
     std::clog << "Plain " << p.dim.rows << 'x' << p.dim.columns << " with "
               << p.blizzards.size() << " blizzards\n";
 
+    p.start = Index2D{0, 0};
+    p.goal = Index2D{p.dim.rows - 1, p.dim.columns - 1};
     Field f(p.dim, eBlocked);
     int steps;
-    for (steps = 1; !isExitReachable(f); ++steps) {
+    for (steps = 1; !isExitReachable(f, p.goal); ++steps) {
         p.moveBlizzards();
         updateField(f, p);
     }
     output << steps << '\n';
 }
 
-template <> void puzzleB<2022, 24>(std::istream &input, std::ostream &output) {}
+template <> void puzzleB<2022, 24>(std::istream &input, std::ostream &output) {
+    Plain p = readPlain(input);
+    if (input.fail()) {
+        throw std::runtime_error("Error reading input");
+    }
+    std::clog << "Plain " << p.dim.rows << 'x' << p.dim.columns << " with "
+              << p.blizzards.size() << " blizzards\n";
+
+    p.start = Index2D{0, 0};
+    p.goal = Index2D{p.dim.rows - 1, p.dim.columns - 1};
+    int steps = 1;
+    for (int i = 0; i < 3; ++i) {
+        Field f(p.dim, eBlocked);
+        for (; !isExitReachable(f, p.goal); ++steps) {
+            p.moveBlizzards();
+            updateField(f, p);
+        }
+        std::swap(p.start, p.goal);
+    }
+    output << steps << '\n';
+}
 
 } // namespace advent::common
